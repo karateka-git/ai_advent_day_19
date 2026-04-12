@@ -535,6 +535,23 @@
 3. Прогнать `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless -SkipBuild`.
 4. При необходимости обновить скрипты под новую внутреннюю архитектуру без изменения их пользовательского смысла.
 
+Подэтапы внедрения:
+
+1. Детализировать шаги `Этапа 6` в ТЗ и зафиксировать критерий успешности:
+   - пользовательские команды проекта должны сохранить прежний смысл;
+   - launcher-скрипты не должны требовать знания новой внутренней архитектуры;
+   - verification contour должен оставаться зелёным поверх цепочки `presentation -> application -> agent -> mcp`.
+2. Прогнать полный набор проверок проекта:
+   - `.\gradlew.bat test`
+   - `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`
+   - `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless -SkipBuild`
+3. Если verification contour ломается, адаптировать только скрипты и проектные команды, не меняя их пользовательский смысл:
+   - `runClient`
+   - `check-e2e.ps1`
+   - `start-manual-check.ps1`
+4. Повторно прогнать проверки после возможной адаптации.
+5. Зафиксировать результат `Этапа 6` в журнале реализации агентной архитектуры, отдельно отметив, требовались ли изменения в scripts или существующий workflow продолжил работать без правок.
+
 ### Этап 7. Документация И MemoryBank
 
 Цель:
