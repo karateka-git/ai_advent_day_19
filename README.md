@@ -21,5 +21,5 @@ Sandbox-проект для знакомства с MCP и подготовки 
 ## Документация
 
 - проектный `MemoryBank`: [MemoryBank/README.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/MemoryBank/README.md)
-- preflight для новых сессий: [docs/agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/agent-preflight.md)
+- preflight для новых сессий: [MemoryBank/agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/MemoryBank/agent-preflight.md)
 - ТЗ на реализацию текущего этапа: [docs/technical-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/technical-spec.md)

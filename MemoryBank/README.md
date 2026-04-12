@@ -15,5 +15,5 @@
 
 ## Связанные Проектные Артефакты
 
-- краткий operational summary для новых сессий лежит в [docs/agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/agent-preflight.md)
+- краткий operational summary для новых сессий лежит в [agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/MemoryBank/agent-preflight.md)
 - текущая цель проекта: минимальный reference по MCP, где локальный HTTP-based сервер и клиент живут в одном sandbox-проекте
