@@ -36,6 +36,7 @@ tasks.register<JavaExec>("runClient") {
     description = "Runs the MCP client entrypoint."
     classpath = sourceSets["main"].runtimeClasspath
     mainClass.set("ru.compadre.mcp.client.McpClientAppKt")
+    args("connect")
 }
 
 dependencies {

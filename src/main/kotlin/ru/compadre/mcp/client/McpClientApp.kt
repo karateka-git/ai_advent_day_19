@@ -21,9 +21,18 @@ import java.nio.charset.StandardCharsets
 /**
  * Точка входа минимального MCP client для сценария `initialize -> tools/list`.
  */
-fun main(): Unit = runBlocking {
+fun main(args: Array<String>): Unit = runBlocking {
     configureUtf8Console()
+    when (parseClientCommand(args)) {
+        ClientCommand.Connect -> runConnectCommand()
+    }
+}
 
+internal enum class ClientCommand {
+    Connect,
+}
+
+private suspend fun runConnectCommand() {
     val endpoint = McpProjectConfig.defaultEndpoint()
     val httpClient = createHttpClient()
 
@@ -39,6 +48,17 @@ fun main(): Unit = runBlocking {
         }
     } finally {
         httpClient.close()
+    }
+}
+
+internal fun parseClientCommand(args: Array<String>): ClientCommand {
+    val rawCommand = args.firstOrNull()?.trim()?.lowercase() ?: "connect"
+
+    return when (rawCommand) {
+        "connect" -> ClientCommand.Connect
+        else -> throw IllegalArgumentException(
+            "Неизвестная команда клиента: `$rawCommand`. Поддерживаемые команды: connect.",
+        )
     }
 }
 
