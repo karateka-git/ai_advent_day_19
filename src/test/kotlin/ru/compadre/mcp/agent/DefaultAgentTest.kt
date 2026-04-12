@@ -1,5 +1,6 @@
 package ru.compadre.mcp.agent
 
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -10,7 +11,7 @@ import ru.compadre.mcp.mcp.model.McpToolDescriptor
 
 class DefaultAgentTest {
     @Test
-    fun connectRequestReturnsNormalizedSuccessResponse() = kotlinx.coroutines.test.runTest {
+    fun connectRequestReturnsNormalizedSuccessResponse() = runBlocking {
         val agent = DefaultAgent(
             mcpClient = object : McpClient {
                 override suspend fun connect(endpoint: String): McpConnectionSnapshot = McpConnectionSnapshot(
@@ -37,7 +38,7 @@ class DefaultAgentTest {
     }
 
     @Test
-    fun connectRequestReturnsFailureWhenMcpClientThrows() = kotlinx.coroutines.test.runTest {
+    fun connectRequestReturnsFailureWhenMcpClientThrows() = runBlocking {
         val agent = DefaultAgent(
             mcpClient = object : McpClient {
                 override suspend fun connect(endpoint: String): McpConnectionSnapshot {
