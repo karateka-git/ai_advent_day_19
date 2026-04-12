@@ -2,13 +2,14 @@ package ru.compadre.mcp.client
 
 import kotlinx.coroutines.runBlocking
 import ru.compadre.mcp.agent.DefaultAgent
-import ru.compadre.mcp.application.command.ConnectCommand
-import ru.compadre.mcp.application.result.ConnectResult
 import ru.compadre.mcp.application.service.ApplicationCommandHandler
 import ru.compadre.mcp.application.service.DefaultApplicationCommandHandler
 import ru.compadre.mcp.config.McpProjectConfig
 import ru.compadre.mcp.mcp.DefaultMcpClient
-import ru.compadre.mcp.mcp.model.McpToolDescriptor
+import ru.compadre.mcp.presentation.cli.CliCommandParser
+import ru.compadre.mcp.presentation.cli.CliOutputFormatter
+import ru.compadre.mcp.presentation.cli.DefaultCliCommandParser
+import ru.compadre.mcp.presentation.cli.DefaultCliOutputFormatter
 import java.io.FileDescriptor
 import java.io.FileOutputStream
 import java.io.PrintStream
@@ -19,51 +20,18 @@ import java.nio.charset.StandardCharsets
  */
 fun main(args: Array<String>): Unit = runBlocking {
     configureUtf8Console()
-    when (parseClientCommand(args)) {
-        ClientCommand.Connect -> runConnectCommand()
-    }
-}
 
-internal enum class ClientCommand {
-    Connect,
-}
-
-private suspend fun runConnectCommand() {
-    val endpoint = McpProjectConfig.defaultEndpoint()
+    val commandParser: CliCommandParser = DefaultCliCommandParser(McpProjectConfig::defaultEndpoint)
     val commandHandler: ApplicationCommandHandler = DefaultApplicationCommandHandler(
         agent = DefaultAgent(DefaultMcpClient()),
     )
-    val result = commandHandler.handle(
-        ConnectCommand(endpointOverride = endpoint),
-    )
+    val outputFormatter: CliOutputFormatter = DefaultCliOutputFormatter()
 
-    when (result) {
-        is ConnectResult -> {
-            if (!result.connected) {
-                throw IllegalStateException(result.errorMessage ?: "Не удалось подключиться к MCP server.")
-            }
+    val command = commandParser.parse(args)
+    val result = commandHandler.handle(command)
+    val output = outputFormatter.format(result)
 
-            printConnectionSummary(result)
-            println(renderToolsList(result.tools.map { tool ->
-                McpToolDescriptor(
-                    name = tool.name,
-                    title = tool.title,
-                    description = tool.description,
-                )
-            }))
-        }
-    }
-}
-
-internal fun parseClientCommand(args: Array<String>): ClientCommand {
-    val rawCommand = args.firstOrNull()?.trim()?.lowercase() ?: "connect"
-
-    return when (rawCommand) {
-        "connect" -> ClientCommand.Connect
-        else -> throw IllegalArgumentException(
-            "Неизвестная команда клиента: `$rawCommand`. Поддерживаемые команды: connect.",
-        )
-    }
+    println(output)
 }
 
 private fun configureUtf8Console() {
@@ -81,33 +49,4 @@ private fun configureUtf8Console() {
             StandardCharsets.UTF_8,
         ),
     )
-}
-
-private fun printConnectionSummary(result: ConnectResult) {
-    println("Connected to MCP server: ${result.endpoint}")
-    println("Server name: ${result.serverName ?: "<unknown>"}")
-    println("Server version: ${result.serverVersion ?: "<unknown>"}")
-    println("Server title: ${result.serverTitle ?: "<unknown>"}")
-    println("Server instructions: ${result.serverInstructions ?: "<none>"}")
-}
-
-internal fun renderToolsList(tools: List<McpToolDescriptor>): String {
-    if (tools.isEmpty()) {
-        return "Available tools: <none>"
-    }
-
-    val lines = buildList {
-        add("Available tools (${tools.size}):")
-        tools.forEachIndexed { index, tool ->
-            add("${index + 1}. ${formatToolLine(tool)}")
-        }
-    }
-
-    return lines.joinToString(separator = System.lineSeparator())
-}
-
-private fun formatToolLine(tool: McpToolDescriptor): String {
-    val title = tool.title?.takeIf { it.isNotBlank() } ?: tool.name
-    val description = tool.description?.takeIf { it.isNotBlank() } ?: "Описание не указано."
-    return "$title [${tool.name}] - $description"
 }
