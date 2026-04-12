@@ -1,18 +1,11 @@
 package ru.compadre.mcp.client
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.sse.SSE
-import io.modelcontextprotocol.kotlin.sdk.ExperimentalMcpApi
-import io.modelcontextprotocol.kotlin.sdk.client.Client
-import io.modelcontextprotocol.kotlin.sdk.client.ClientOptions
-import io.modelcontextprotocol.kotlin.sdk.client.mcpClient
-import io.modelcontextprotocol.kotlin.sdk.client.mcpStreamableHttpTransport
-import io.modelcontextprotocol.kotlin.sdk.types.Implementation
-import io.modelcontextprotocol.kotlin.sdk.types.ListToolsResult
-import io.modelcontextprotocol.kotlin.sdk.types.Tool
-import ru.compadre.mcp.config.McpProjectConfig
 import kotlinx.coroutines.runBlocking
+import ru.compadre.mcp.config.McpProjectConfig
+import ru.compadre.mcp.mcp.DefaultMcpClient
+import ru.compadre.mcp.mcp.McpClient
+import ru.compadre.mcp.mcp.model.McpConnectionSnapshot
+import ru.compadre.mcp.mcp.model.McpToolDescriptor
 import java.io.FileDescriptor
 import java.io.FileOutputStream
 import java.io.PrintStream
@@ -34,21 +27,11 @@ internal enum class ClientCommand {
 
 private suspend fun runConnectCommand() {
     val endpoint = McpProjectConfig.defaultEndpoint()
-    val httpClient = createHttpClient()
+    val mcpClient: McpClient = DefaultMcpClient()
+    val snapshot = mcpClient.connect(endpoint)
 
-    try {
-        val mcpClient = createMcpClient(httpClient, endpoint)
-        try {
-            printConnectionSummary(endpoint, mcpClient)
-
-            val toolsResult = mcpClient.listTools()
-            println(renderToolsList(toolsResult))
-        } finally {
-            mcpClient.close()
-        }
-    } finally {
-        httpClient.close()
-    }
+    printConnectionSummary(snapshot)
+    println(renderToolsList(snapshot.tools))
 }
 
 internal fun parseClientCommand(args: Array<String>): ClientCommand {
@@ -60,10 +43,6 @@ internal fun parseClientCommand(args: Array<String>): ClientCommand {
             "Неизвестная команда клиента: `$rawCommand`. Поддерживаемые команды: connect.",
         )
     }
-}
-
-private fun createHttpClient(): HttpClient = HttpClient(CIO) {
-    install(SSE)
 }
 
 private fun configureUtf8Console() {
@@ -83,31 +62,15 @@ private fun configureUtf8Console() {
     )
 }
 
-@OptIn(ExperimentalMcpApi::class)
-private suspend fun createMcpClient(httpClient: HttpClient, endpoint: String): Client {
-    val transport = httpClient.mcpStreamableHttpTransport(endpoint)
-
-    return mcpClient(
-        clientInfo = Implementation(
-            name = "local_mcp_client",
-            version = "0.1.0",
-            title = "Local MCP Client",
-        ),
-        clientOptions = ClientOptions(),
-        transport = transport,
-    )
+private fun printConnectionSummary(snapshot: McpConnectionSnapshot) {
+    println("Connected to MCP server: ${snapshot.endpoint}")
+    println("Server name: ${snapshot.serverInfo.name}")
+    println("Server version: ${snapshot.serverInfo.version}")
+    println("Server title: ${snapshot.serverInfo.title ?: "<unknown>"}")
+    println("Server instructions: ${snapshot.serverInfo.instructions ?: "<none>"}")
 }
 
-private fun printConnectionSummary(endpoint: String, client: Client) {
-    println("Connected to MCP server: $endpoint")
-    println("Server name: ${client.serverVersion?.name ?: "<unknown>"}")
-    println("Server version: ${client.serverVersion?.version ?: "<unknown>"}")
-    println("Server title: ${client.serverVersion?.title ?: "<unknown>"}")
-    println("Server instructions: ${client.serverInstructions ?: "<none>"}")
-}
-
-internal fun renderToolsList(result: ListToolsResult): String {
-    val tools = result.tools
+internal fun renderToolsList(tools: List<McpToolDescriptor>): String {
     if (tools.isEmpty()) {
         return "Available tools: <none>"
     }
@@ -122,7 +85,7 @@ internal fun renderToolsList(result: ListToolsResult): String {
     return lines.joinToString(separator = System.lineSeparator())
 }
 
-private fun formatToolLine(tool: Tool): String {
+private fun formatToolLine(tool: McpToolDescriptor): String {
     val title = tool.title?.takeIf { it.isNotBlank() } ?: tool.name
     val description = tool.description?.takeIf { it.isNotBlank() } ?: "Описание не указано."
     return "$title [${tool.name}] - $description"
