@@ -493,6 +493,29 @@
 3. Упростить `main` до wiring-кода.
 4. Проверить, что `runClient` по-прежнему даёт тот же пользовательский результат.
 
+Подэтапы внедрения:
+
+1. Детализировать шаги `Этапа 5` в ТЗ и зафиксировать границу presentation-слоя:
+   - CLI должен преобразовывать аргументы в `Command`;
+   - CLI должен форматировать только `CommandResult`;
+   - `main` должен стать composition root без orchestration-логики.
+2. Добавить рабочую реализацию `CliCommandParser`, которая:
+   - понимает текущую команду `connect`;
+   - подставляет endpoint по умолчанию через конфигурацию;
+   - возвращает `ConnectCommand`.
+3. Добавить рабочую реализацию `CliOutputFormatter`, которая:
+   - форматирует успешный `ConnectResult`;
+   - форматирует неуспешный `ConnectResult`;
+   - не зависит от `AgentResponse` и MCP SDK-типов.
+4. Перевести `McpClientApp.kt` на использование parser, formatter и `ApplicationCommandHandler`, оставив в файле только composition root и настройку консоли.
+5. Добавить локальные unit-проверки presentation-слоя:
+   - разбор команды `connect`;
+   - форматирование успешного и неуспешного `ConnectResult`.
+6. Прогнать:
+   - `.\gradlew.bat test`
+   - `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`
+7. Зафиксировать результат `Этапа 5` в журнале реализации агентной архитектуры.
+
 ### Этап 6. Адаптация Команд Проекта И Проверок
 
 Цель:
