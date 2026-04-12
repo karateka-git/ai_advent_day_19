@@ -1,4 +1,4 @@
-package ru.compadre.mcp.application.result
+package ru.compadre.mcp.workflow.result
 
 /**
  * Результат выполнения команды подключения к MCP.

@@ -1,9 +1,9 @@
 package ru.compadre.mcp.presentation.cli
 
-import ru.compadre.mcp.application.result.CommandResult
+import ru.compadre.mcp.workflow.result.CommandResult
 
 /**
- * Контракт форматирования результата application-слоя для CLI.
+ * Контракт форматирования результата workflow-слоя для CLI.
  */
 interface CliOutputFormatter {
     /**

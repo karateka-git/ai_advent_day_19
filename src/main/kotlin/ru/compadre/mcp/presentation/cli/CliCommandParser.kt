@@ -1,13 +1,13 @@
 package ru.compadre.mcp.presentation.cli
 
-import ru.compadre.mcp.application.command.Command
+import ru.compadre.mcp.workflow.command.Command
 
 /**
- * Контракт разбора CLI-ввода в application-команду.
+ * Контракт разбора CLI-ввода в workflow-команду.
  */
 interface CliCommandParser {
     /**
-     * Разбирает CLI-аргументы в application-команду.
+     * Разбирает CLI-аргументы в workflow-команду.
      */
     fun parse(args: Array<String>): Command
 }

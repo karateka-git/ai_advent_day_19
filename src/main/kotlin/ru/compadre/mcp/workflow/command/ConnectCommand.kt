@@ -1,4 +1,4 @@
-package ru.compadre.mcp.application.command
+package ru.compadre.mcp.workflow.command
 
 /**
  * Команда подключения к MCP server и запроса базовой информации.

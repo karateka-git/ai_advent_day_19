@@ -1,7 +1,7 @@
 package ru.compadre.mcp.presentation.cli
 
-import ru.compadre.mcp.application.command.Command
-import ru.compadre.mcp.application.command.ConnectCommand
+import ru.compadre.mcp.workflow.command.Command
+import ru.compadre.mcp.workflow.command.ConnectCommand
 
 /**
  * Стандартный CLI-разборщик команд проекта.

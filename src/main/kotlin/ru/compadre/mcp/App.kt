@@ -2,27 +2,27 @@ package ru.compadre.mcp
 
 import kotlinx.coroutines.runBlocking
 import ru.compadre.mcp.agent.DefaultAgent
-import ru.compadre.mcp.application.service.ApplicationCommandHandler
-import ru.compadre.mcp.application.service.DefaultApplicationCommandHandler
 import ru.compadre.mcp.config.McpProjectConfig
 import ru.compadre.mcp.mcp.DefaultMcpClient
 import ru.compadre.mcp.presentation.cli.CliCommandParser
 import ru.compadre.mcp.presentation.cli.CliOutputFormatter
 import ru.compadre.mcp.presentation.cli.DefaultCliCommandParser
 import ru.compadre.mcp.presentation.cli.DefaultCliOutputFormatter
+import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
+import ru.compadre.mcp.workflow.service.WorkflowCommandHandler
 import java.io.FileDescriptor
 import java.io.FileOutputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 
 /**
- * Главная точка входа приложения, связывающая presentation, application, agent и MCP-слои.
+ * Главная точка входа приложения, связывающая presentation, workflow, agent и MCP-слои.
  */
 fun main(args: Array<String>): Unit = runBlocking {
     configureUtf8Console()
 
     val commandParser: CliCommandParser = DefaultCliCommandParser(McpProjectConfig::defaultEndpoint)
-    val commandHandler: ApplicationCommandHandler = DefaultApplicationCommandHandler(
+    val commandHandler: WorkflowCommandHandler = DefaultWorkflowCommandHandler(
         agent = DefaultAgent(DefaultMcpClient()),
     )
     val outputFormatter: CliOutputFormatter = DefaultCliOutputFormatter()
@@ -63,11 +63,11 @@ private fun configureUtf8Console() {
 
 private suspend fun runInteractiveShell(
     commandParser: CliCommandParser,
-    commandHandler: ApplicationCommandHandler,
+    commandHandler: WorkflowCommandHandler,
     outputFormatter: CliOutputFormatter,
 ) {
-    println("MCP client is ready.")
-    println("Available commands: connect, help, exit")
+    println("MCP-клиент готов к работе.")
+    println("Доступные команды: connect, help, exit")
 
     while (true) {
         print("> ")
@@ -75,7 +75,7 @@ private suspend fun runInteractiveShell(
             ?.trim()
             ?.trimStart('\uFEFF')
             ?: run {
-                println("Stopping client session.")
+                println("Сессия клиента завершена.")
                 return
             }
 
@@ -85,12 +85,12 @@ private suspend fun runInteractiveShell(
 
         when (rawInput.lowercase()) {
             "exit", "quit" -> {
-                println("Stopping client session.")
+                println("Сессия клиента завершена.")
                 return
             }
 
             "help" -> {
-                println("Available commands: connect, help, exit")
+                println("Доступные команды: connect, help, exit")
                 continue
             }
         }
@@ -107,7 +107,7 @@ private suspend fun runInteractiveShell(
 private suspend fun executeCommand(
     commandArgs: Array<String>,
     commandParser: CliCommandParser,
-    commandHandler: ApplicationCommandHandler,
+    commandHandler: WorkflowCommandHandler,
     outputFormatter: CliOutputFormatter,
 ) {
     try {
@@ -116,6 +116,6 @@ private suspend fun executeCommand(
         val output = outputFormatter.format(result)
         println(output)
     } catch (error: IllegalArgumentException) {
-        println(error.message ?: "Command parsing failed.")
+        println(error.message ?: "Не удалось разобрать команду.")
     }
 }

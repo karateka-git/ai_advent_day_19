@@ -2,8 +2,8 @@ package ru.compadre.mcp.presentation.cli
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import ru.compadre.mcp.application.result.ConnectResult
-import ru.compadre.mcp.application.result.ConnectToolResult
+import ru.compadre.mcp.workflow.result.ConnectResult
+import ru.compadre.mcp.workflow.result.ConnectToolResult
 
 class DefaultCliOutputFormatterTest {
     private val formatter = DefaultCliOutputFormatter()
@@ -32,12 +32,12 @@ class DefaultCliOutputFormatterTest {
         )
 
         val expected = listOf(
-            "Connected to MCP server: http://127.0.0.1:3000/mcp",
-            "Server name: local_mcp_server",
-            "Server version: 0.1.0",
-            "Server title: Local MCP Server",
-            "Server instructions: Локальный MCP server для sandbox-проекта.",
-            "Available tools (2):",
+            "Подключение к MCP-серверу установлено: http://127.0.0.1:3000/mcp",
+            "Имя сервера: local_mcp_server",
+            "Версия сервера: 0.1.0",
+            "Заголовок сервера: Local MCP Server",
+            "Инструкции сервера: Локальный MCP server для sandbox-проекта.",
+            "Доступные инструменты (2):",
             "1. Ping [ping] - Возвращает короткий ответ сервера для проверки доступности.",
             "2. Echo [echo] - Возвращает переданную строку обратно клиенту.",
         ).joinToString(System.lineSeparator())
@@ -54,8 +54,8 @@ class DefaultCliOutputFormatterTest {
         )
 
         val expected = listOf(
-            "Failed to connect to MCP server: http://127.0.0.1:3000/mcp",
-            "Error: boom",
+            "Не удалось подключиться к MCP-серверу: http://127.0.0.1:3000/mcp",
+            "Ошибка: boom",
         ).joinToString(System.lineSeparator())
 
         assertEquals(expected, formatter.format(result))

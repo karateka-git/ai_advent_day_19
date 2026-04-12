@@ -11,18 +11,30 @@ $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
+function Get-ClientBatPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$WorkingDirectory
+    )
+
+    return Join-Path $WorkingDirectory "build\install\mcp-client\bin\mcp-client.bat"
+}
+
 function Invoke-InteractiveClientCommands {
     param(
         [Parameter(Mandatory = $true)]
         [string]$WorkingDirectory,
 
         [Parameter(Mandatory = $true)]
-        [string[]]$InputCommands
+        [string[]]$InputCommands,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BatPath
     )
 
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName = "cmd.exe"
-    $psi.Arguments = "/c chcp 65001>nul && .\\gradlew.bat runClient --no-daemon"
+    $psi.Arguments = "/c chcp 65001>nul && `"$BatPath`""
     $psi.WorkingDirectory = $WorkingDirectory
     $psi.UseShellExecute = $false
     $psi.RedirectStandardInput = $true
@@ -37,10 +49,11 @@ function Invoke-InteractiveClientCommands {
     try {
         $process.Start() | Out-Null
 
-        foreach ($command in $InputCommands) {
-            $process.StandardInput.WriteLine($command)
-        }
-
+        $scenarioContent = (($InputCommands | ForEach-Object { [string]$_ }) -join "`n")
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        $stdinBytes = $utf8NoBom.GetBytes("$scenarioContent`n")
+        $process.StandardInput.BaseStream.Write($stdinBytes, 0, $stdinBytes.Length)
+        $process.StandardInput.BaseStream.Flush()
         $process.StandardInput.Close()
 
         $stdout = $process.StandardOutput.ReadToEnd()
@@ -59,9 +72,15 @@ function Invoke-InteractiveClientCommands {
 
 Set-Location $ProjectRoot
 
+$clientBatPath = Get-ClientBatPath -WorkingDirectory $ProjectRoot
+if (-not (Test-Path -LiteralPath $clientBatPath)) {
+    throw "Built client launcher not found: $clientBatPath. Run .\gradlew.bat build and .\gradlew.bat installClientDist first."
+}
+
 $result = Invoke-InteractiveClientCommands `
     -WorkingDirectory $ProjectRoot `
-    -InputCommands $Commands
+    -InputCommands $Commands `
+    -BatPath $clientBatPath
 
 if ($StdoutPath) {
     [System.IO.File]::WriteAllText($StdoutPath, $result.Stdout, [System.Text.Encoding]::UTF8)

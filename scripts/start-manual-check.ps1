@@ -48,16 +48,49 @@ function Wait-Port {
     throw "Server did not start listening on $TargetHost`:$Port in time."
 }
 
+function Get-ClientBatPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot
+    )
+
+    return Join-Path $ProjectRoot "build\install\mcp-client\bin\mcp-client.bat"
+}
+
+function Get-ServerBatPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot
+    )
+
+    return Join-Path $ProjectRoot "build\install\mcp-server\bin\mcp-server.bat"
+}
+
+function Assert-LauncherExists {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Description
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "$Description not found: $Path. Run .\gradlew.bat build, .\gradlew.bat installClientDist and .\gradlew.bat installServerDist first."
+    }
+}
+
 function New-Utf8ShellCommand {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot,
 
         [Parameter(Mandatory = $true)]
-        [string]$Command
+        [string]$BatPath
     )
 
     $escapedProjectRoot = $ProjectRoot.Replace("'", "''")
+    $escapedBatPath = $BatPath.Replace("'", "''")
 
     return @"
 chcp 65001 > `$null
@@ -65,11 +98,54 @@ chcp 65001 > `$null
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 `$OutputEncoding = [System.Text.Encoding]::UTF8
 Set-Location '$escapedProjectRoot'
-$Command
+& '$escapedBatPath'
 "@
 }
 
-function Invoke-Utf8GradleClient {
+function Start-HeadlessLauncherProcess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BatPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StdoutPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StderrPath
+    )
+
+    $command = "chcp 65001>nul && `"$BatPath`""
+
+    return Start-Process `
+        -FilePath "cmd.exe" `
+        -ArgumentList "/c", $command `
+        -WorkingDirectory $ProjectRoot `
+        -RedirectStandardOutput $StdoutPath `
+        -RedirectStandardError $StderrPath `
+        -PassThru
+}
+
+function Stop-HeadlessLauncherProcess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Diagnostics.Process]$Process
+    )
+
+    if ($Process) {
+        try {
+            if (-not $Process.HasExited) {
+                Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+            }
+        } finally {
+            $Process.Dispose()
+        }
+    }
+}
+
+function Invoke-Utf8ClientCommands {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot,
@@ -108,12 +184,17 @@ $serverEndpoint = "http://$serverHost`:$serverPort/mcp"
 if ($SkipBuild) {
     Write-Output "Skipping build step and reusing existing artifacts..."
 } else {
-    Write-Output "Building project..."
-    & .\gradlew.bat build
+    Write-Output "Building project and direct launchers..."
+    & .\gradlew.bat build installClientDist installServerDist
     if ($LASTEXITCODE -ne 0) {
         throw "Build failed with exit code $LASTEXITCODE."
     }
 }
+
+$clientBatPath = Get-ClientBatPath -ProjectRoot $projectRoot
+$serverBatPath = Get-ServerBatPath -ProjectRoot $projectRoot
+Assert-LauncherExists -Path $clientBatPath -Description "Built client launcher"
+Assert-LauncherExists -Path $serverBatPath -Description "Built server launcher"
 
 Stop-ListeningProcess -Port $serverPort
 
@@ -139,20 +220,18 @@ if ($Headless) {
     $serverProcess = $null
 
     try {
-        $serverProcess = Start-Process `
-            -FilePath ".\gradlew.bat" `
-            -ArgumentList "runServer", "--no-daemon" `
-            -WorkingDirectory $projectRoot `
-            -RedirectStandardOutput $serverStdout `
-            -RedirectStandardError $serverStderr `
-            -PassThru
+        $serverProcess = Start-HeadlessLauncherProcess `
+            -ProjectRoot $projectRoot `
+            -BatPath $serverBatPath `
+            -StdoutPath $serverStdout `
+            -StderrPath $serverStderr
 
         Wait-Port -TargetHost $serverHost -Port $serverPort
 
         Write-Output "Server is ready at $serverEndpoint"
         Write-Output "Running client in current console..."
 
-        $clientExitCode = Invoke-Utf8GradleClient `
+        $clientExitCode = Invoke-Utf8ClientCommands `
             -ProjectRoot $projectRoot `
             -StdoutPath $clientStdout `
             -StderrPath $clientStderr
@@ -160,8 +239,8 @@ if ($Headless) {
             throw "Client failed with exit code $clientExitCode."
         }
     } finally {
-        if ($serverProcess -and -not $serverProcess.HasExited) {
-            Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
+        if ($serverProcess) {
+            Stop-HeadlessLauncherProcess -Process $serverProcess
         }
 
         Stop-ListeningProcess -Port $serverPort
@@ -172,11 +251,11 @@ if ($Headless) {
 
 $serverCommand = New-Utf8ShellCommand `
     -ProjectRoot $projectRoot `
-    -Command ".\gradlew.bat runServer"
+    -BatPath $serverBatPath
 
 $clientCommand = New-Utf8ShellCommand `
     -ProjectRoot $projectRoot `
-    -Command ".\gradlew.bat runClient"
+    -BatPath $clientBatPath
 
 Write-Output "Opening server window..."
 $serverWindow = Start-Process powershell `

@@ -43,6 +43,61 @@ function Wait-Port {
     throw "Server did not start listening on $TargetHost`:$Port in time."
 }
 
+function Get-ClientBatPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot
+    )
+
+    return Join-Path $ProjectRoot "build\install\mcp-client\bin\mcp-client.bat"
+}
+
+function Get-ServerBatPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot
+    )
+
+    return Join-Path $ProjectRoot "build\install\mcp-server\bin\mcp-server.bat"
+}
+
+function Assert-LauncherExists {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Description
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "$Description not found: $Path. Run .\gradlew.bat build, .\gradlew.bat installClientDist and .\gradlew.bat installServerDist first."
+    }
+}
+
+function Ensure-Launchers {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ClientBatPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ServerBatPath
+    )
+
+    if ((Test-Path -LiteralPath $ClientBatPath) -and (Test-Path -LiteralPath $ServerBatPath)) {
+        return
+    }
+
+    Write-Output "Direct launchers not found. Building install distributions..."
+    & .\gradlew.bat installClientDist installServerDist
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to build direct launchers. Gradle exit code: $LASTEXITCODE."
+    }
+}
+
 function Assert-OutputContains {
     param(
         [Parameter(Mandatory = $true)]
@@ -59,7 +114,50 @@ function Assert-OutputContains {
     }
 }
 
-function Invoke-Utf8GradleClient {
+function Start-HeadlessLauncherProcess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BatPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StdoutPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StderrPath
+    )
+
+    $command = "chcp 65001>nul && `"$BatPath`""
+
+    return Start-Process `
+        -FilePath "cmd.exe" `
+        -ArgumentList "/c", $command `
+        -WorkingDirectory $ProjectRoot `
+        -RedirectStandardOutput $StdoutPath `
+        -RedirectStandardError $StderrPath `
+        -PassThru
+}
+
+function Stop-HeadlessLauncherProcess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Diagnostics.Process]$Process
+    )
+
+    if ($Process) {
+        try {
+            if (-not $Process.HasExited) {
+                Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+            }
+        } finally {
+            $Process.Dispose()
+        }
+    }
+}
+
+function Invoke-Utf8ClientCommands {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot,
@@ -95,6 +193,12 @@ $serverStderr = Join-Path $tmpDir "server.err"
 $clientStdout = Join-Path $tmpDir "client.out"
 $clientStderr = Join-Path $tmpDir "client.err"
 
+$clientBatPath = Get-ClientBatPath -ProjectRoot $projectRoot
+$serverBatPath = Get-ServerBatPath -ProjectRoot $projectRoot
+Ensure-Launchers -ProjectRoot $projectRoot -ClientBatPath $clientBatPath -ServerBatPath $serverBatPath
+Assert-LauncherExists -Path $clientBatPath -Description "Built client launcher"
+Assert-LauncherExists -Path $serverBatPath -Description "Built server launcher"
+
 @($serverStdout, $serverStderr, $clientStdout, $clientStderr) | ForEach-Object {
     if (Test-Path $_) {
         Remove-Item $_ -Force
@@ -106,17 +210,15 @@ $serverProcess = $null
 try {
     Stop-ListeningProcess -Port $serverPort
 
-    $serverProcess = Start-Process `
-        -FilePath ".\gradlew.bat" `
-        -ArgumentList "runServer", "--no-daemon" `
-        -WorkingDirectory $projectRoot `
-        -RedirectStandardOutput $serverStdout `
-        -RedirectStandardError $serverStderr `
-        -PassThru
+    $serverProcess = Start-HeadlessLauncherProcess `
+        -ProjectRoot $projectRoot `
+        -BatPath $serverBatPath `
+        -StdoutPath $serverStdout `
+        -StderrPath $serverStderr
 
     Wait-Port -TargetHost $serverHost -Port $serverPort
 
-    $clientExitCode = Invoke-Utf8GradleClient `
+    $clientExitCode = Invoke-Utf8ClientCommands `
         -ProjectRoot $projectRoot `
         -StdoutPath $clientStdout `
         -StderrPath $clientStderr
@@ -129,9 +231,8 @@ try {
 
     $clientOutput = Get-Content $clientStdout -Raw
     Assert-OutputContains -Text $clientOutput -ExpectedFragments @(
-        "Connected to MCP server: $serverEndpoint",
-        "Server name: local_mcp_server",
-        "Available tools (2):",
+        $serverEndpoint,
+        "local_mcp_server",
         "Ping [ping]",
         "Echo [echo]"
     )
@@ -141,8 +242,8 @@ try {
     Write-Output "Client output:"
     Write-Output $clientOutput
 } finally {
-    if ($serverProcess -and -not $serverProcess.HasExited) {
-        Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
+    if ($serverProcess) {
+        Stop-HeadlessLauncherProcess -Process $serverProcess
     }
 
     Stop-ListeningProcess -Port $serverPort

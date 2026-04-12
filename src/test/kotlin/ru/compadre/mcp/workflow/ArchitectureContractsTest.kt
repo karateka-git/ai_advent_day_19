@@ -1,17 +1,17 @@
-package ru.compadre.mcp.application
+package ru.compadre.mcp.workflow
 
-import ru.compadre.mcp.agent.AgentRequest
-import ru.compadre.mcp.agent.AgentResponse
-import ru.compadre.mcp.application.command.Command
-import ru.compadre.mcp.application.command.ConnectCommand
-import ru.compadre.mcp.application.result.CommandResult
-import ru.compadre.mcp.application.result.ConnectResult
-import ru.compadre.mcp.application.result.ConnectToolResult
-import ru.compadre.mcp.mcp.model.McpServerInfo
-import ru.compadre.mcp.mcp.model.McpToolDescriptor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import ru.compadre.mcp.agent.AgentRequest
+import ru.compadre.mcp.agent.AgentResponse
+import ru.compadre.mcp.mcp.model.McpServerInfo
+import ru.compadre.mcp.mcp.model.McpToolDescriptor
+import ru.compadre.mcp.workflow.command.Command
+import ru.compadre.mcp.workflow.command.ConnectCommand
+import ru.compadre.mcp.workflow.result.CommandResult
+import ru.compadre.mcp.workflow.result.ConnectResult
+import ru.compadre.mcp.workflow.result.ConnectToolResult
 
 class ArchitectureContractsTest {
     @Test

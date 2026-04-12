@@ -30,19 +30,32 @@
 .\gradlew.bat build
 ```
 
-Запуск локального MCP server:
+Сборка direct-launcher артефактов для ручного запуска клиента и сервера:
 
 ```powershell
-.\gradlew.bat runServer
+.\gradlew.bat installClientDist installServerDist
 ```
 
-Запуск MCP client:
+После этого будут доступны launcher-файлы:
+
+- `build\install\mcp-client\bin\mcp-client.bat`
+- `build\install\mcp-server\bin\mcp-server.bat`
+
+Запуск локального MCP server через direct launcher:
 
 ```powershell
-.\gradlew.bat runClient
+.\build\install\mcp-server\bin\mcp-server.bat
 ```
 
-Эта задача запускает обычный интерактивный клиент. После старта он показывает приглашение и ждёт ручного ввода команд, например `connect`.
+Запуск MCP client через direct launcher:
+
+```powershell
+.\build\install\mcp-client\bin\mcp-client.bat
+```
+
+Это основной ручной способ запуска. После старта клиент показывает приглашение и ждёт ручного ввода команд, например `connect`.
+
+Gradle-задачи `runServer` и `runClient` сохранены как технические entrypoint-ы, но для ручной проверки предпочтительнее direct launcher-артефакты: так в консоли нет Gradle progress UI, daemon-сообщений и лишнего шума.
 
  Scripted-запуск клиента для smoke/e2e-сценариев:
 
@@ -50,7 +63,7 @@
 powershell -ExecutionPolicy Bypass -File .\scripts\invoke-client-commands.ps1 -Commands connect,exit
 ```
 
-Этот путь предназначен для автоматических проверок и воспроизводимых сценариев. Основной `runClient` не должен быть привязан к автокомандам, поэтому scripted-подача команд теперь живёт в отдельном PowerShell-скрипте.
+Этот путь предназначен для автоматических проверок и воспроизводимых сценариев. Он запускает тот же клиентский `.bat`, но подаёт команды в stdin из внешнего PowerShell-скрипта.
 
 Подготовка ручной проверки одним запуском:
 
@@ -61,9 +74,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1
 Эта команда:
 
 - собирает проект;
-- поднимает сервер в отдельном окне PowerShell;
+- собирает проект и direct launcher-артефакты;
+- поднимает сервер в отдельном окне PowerShell через `mcp-server.bat`;
 - дожидается готовности локального endpoint;
-- открывает интерактивного клиента в отдельном окне PowerShell.
+- открывает интерактивного клиента в отдельном окне PowerShell через `mcp-client.bat`.
 
 Для этого репозитория пользовательская фраза `собери проект` по умолчанию трактуется именно как этот workflow ручной проверки, а не как один только `.\gradlew.bat build`.
 

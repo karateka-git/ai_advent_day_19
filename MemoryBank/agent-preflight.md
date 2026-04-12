@@ -34,12 +34,16 @@
 
 - Базовые команды проекта:
   - сборка: `.\gradlew.bat build`
-  - запуск сервера: `.\gradlew.bat runServer`
-  - запуск интерактивного клиента: `.\gradlew.bat runClient`
+  - сборка direct launcher-артефактов: `.\gradlew.bat installClientDist installServerDist`
+  - запуск сервера через direct launcher: `.\build\install\mcp-server\bin\mcp-server.bat`
+  - запуск интерактивного клиента через direct launcher: `.\build\install\mcp-client\bin\mcp-client.bat`
+  - технический Gradle-запуск сервера: `.\gradlew.bat runServer`
+  - технический Gradle-запуск клиента: `.\gradlew.bat runClient`
   - scripted-запуск клиента для smoke/e2e: `powershell -ExecutionPolicy Bypass -File .\scripts\invoke-client-commands.ps1 -Commands connect,exit`
   - подготовка ручной проверки: `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1`
   - запуск уже собранного проекта: `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild`
   - сквозная проверка: `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`
+- Для ручного запуска предпочитать direct launcher-артефакты из `build\install\...`, а не `gradlew run...`: так в консоли не смешиваются вывод приложения и Gradle progress UI.
 - Трактовка пользовательской фразы `собери проект`: по умолчанию это запуск `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1`, а не только `.\gradlew.bat build`.
 - Трактовка пользовательской фразы `запусти проект`: по умолчанию это запуск `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild`, то есть тот же ручной launcher без шага сборки.
 - Локальный endpoint по умолчанию: `http://127.0.0.1:3000/mcp`.

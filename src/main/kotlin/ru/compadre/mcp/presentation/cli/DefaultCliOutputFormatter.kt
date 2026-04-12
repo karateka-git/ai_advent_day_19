@@ -1,10 +1,10 @@
 package ru.compadre.mcp.presentation.cli
 
-import ru.compadre.mcp.application.result.CommandResult
-import ru.compadre.mcp.application.result.ConnectResult
+import ru.compadre.mcp.workflow.result.CommandResult
+import ru.compadre.mcp.workflow.result.ConnectResult
 
 /**
- * Стандартный форматтер application-результатов для CLI.
+ * Стандартный форматтер workflow-результатов для CLI.
  */
 class DefaultCliOutputFormatter : CliOutputFormatter {
     override fun format(result: CommandResult): String = when (result) {
@@ -14,22 +14,22 @@ class DefaultCliOutputFormatter : CliOutputFormatter {
     private fun formatConnectResult(result: ConnectResult): String {
         if (!result.connected) {
             return buildList {
-                add("Failed to connect to MCP server: ${result.endpoint}")
-                add("Error: ${result.errorMessage ?: "<unknown>"}")
+                add("Не удалось подключиться к MCP-серверу: ${result.endpoint}")
+                add("Ошибка: ${result.errorMessage ?: "<неизвестно>"}")
             }.joinToString(separator = System.lineSeparator())
         }
 
         val lines = buildList {
-            add("Connected to MCP server: ${result.endpoint}")
-            add("Server name: ${result.serverName ?: "<unknown>"}")
-            add("Server version: ${result.serverVersion ?: "<unknown>"}")
-            add("Server title: ${result.serverTitle ?: "<unknown>"}")
-            add("Server instructions: ${result.serverInstructions ?: "<none>"}")
+            add("Подключение к MCP-серверу установлено: ${result.endpoint}")
+            add("Имя сервера: ${result.serverName ?: "<неизвестно>"}")
+            add("Версия сервера: ${result.serverVersion ?: "<неизвестно>"}")
+            add("Заголовок сервера: ${result.serverTitle ?: "<неизвестно>"}")
+            add("Инструкции сервера: ${result.serverInstructions ?: "<нет>"}")
 
             if (result.tools.isEmpty()) {
-                add("Available tools: <none>")
+                add("Доступные инструменты: <нет>")
             } else {
-                add("Available tools (${result.tools.size}):")
+                add("Доступные инструменты (${result.tools.size}):")
                 result.tools.forEachIndexed { index, tool ->
                     val title = tool.title?.takeIf { it.isNotBlank() } ?: tool.name
                     val description = tool.description?.takeIf { it.isNotBlank() } ?: "Описание не указано."

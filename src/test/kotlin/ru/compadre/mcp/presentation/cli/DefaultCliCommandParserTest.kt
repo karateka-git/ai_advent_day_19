@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import ru.compadre.mcp.application.command.ConnectCommand
+import ru.compadre.mcp.workflow.command.ConnectCommand
 
 class DefaultCliCommandParserTest {
     @Test

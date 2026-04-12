@@ -1,4 +1,4 @@
-package ru.compadre.mcp.application
+package ru.compadre.mcp.workflow
 
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -7,16 +7,16 @@ import kotlin.test.assertIs
 import ru.compadre.mcp.agent.Agent
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
-import ru.compadre.mcp.application.command.ConnectCommand
-import ru.compadre.mcp.application.result.ConnectResult
-import ru.compadre.mcp.application.service.DefaultApplicationCommandHandler
 import ru.compadre.mcp.mcp.model.McpServerInfo
 import ru.compadre.mcp.mcp.model.McpToolDescriptor
+import ru.compadre.mcp.workflow.command.ConnectCommand
+import ru.compadre.mcp.workflow.result.ConnectResult
+import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
 
-class DefaultApplicationCommandHandlerTest {
+class DefaultWorkflowCommandHandlerTest {
     @Test
     fun connectCommandReturnsSuccessfulConnectResult() = runBlocking {
-        val handler = DefaultApplicationCommandHandler(
+        val handler = DefaultWorkflowCommandHandler(
             agent = object : Agent {
                 override suspend fun handle(request: AgentRequest): AgentResponse {
                     val connectRequest = request as AgentRequest.Connect
@@ -49,7 +49,7 @@ class DefaultApplicationCommandHandlerTest {
 
     @Test
     fun connectCommandReturnsFailureResultWhenAgentFails() = runBlocking {
-        val handler = DefaultApplicationCommandHandler(
+        val handler = DefaultWorkflowCommandHandler(
             agent = object : Agent {
                 override suspend fun handle(request: AgentRequest): AgentResponse =
                     AgentResponse.Failure("agent failure")

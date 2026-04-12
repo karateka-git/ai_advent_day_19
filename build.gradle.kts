@@ -1,3 +1,7 @@
+import org.gradle.api.tasks.Sync
+import org.gradle.jvm.application.tasks.CreateStartScripts
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     kotlin("jvm") version "2.2.0"
     kotlin("plugin.serialization") version "2.2.0"
@@ -15,9 +19,32 @@ kotlin {
     jvmToolchain(21)
 }
 
+val launcherJvmArgs = listOf(
+    "-Dfile.encoding=UTF-8",
+    "-Dstdout.encoding=UTF-8",
+    "-Dstderr.encoding=UTF-8",
+)
+val packagedRuntimeClasspath = files(
+    tasks.named<Jar>("jar").flatMap { it.archiveFile },
+    configurations.runtimeClasspath,
+)
+
 application {
     mainClass = "ru.compadre.mcp.AppKt"
-    applicationDefaultJvmArgs = listOf("-Dfile.encoding=UTF-8")
+    applicationDefaultJvmArgs = launcherJvmArgs
+}
+
+tasks.named<CreateStartScripts>("startScripts") {
+    applicationName = "mcp-client"
+    defaultJvmOpts = launcherJvmArgs
+}
+
+val serverStartScripts = tasks.register<CreateStartScripts>("serverStartScripts") {
+    applicationName = "mcp-server"
+    mainClass = "ru.compadre.mcp.mcp.server.McpServerAppKt"
+    classpath = packagedRuntimeClasspath
+    outputDir = layout.buildDirectory.dir("generated/server-start-scripts").get().asFile
+    defaultJvmOpts = launcherJvmArgs
 }
 
 tasks.test {
@@ -37,6 +64,40 @@ tasks.register<JavaExec>("runClient") {
     classpath = sourceSets["main"].runtimeClasspath
     mainClass.set("ru.compadre.mcp.AppKt")
     standardInput = System.`in`
+}
+
+tasks.register<Sync>("installClientDist") {
+    group = "distribution"
+    description = "Builds a direct client launcher distribution."
+    dependsOn(tasks.named("jar"), tasks.named("startScripts"))
+    into(layout.buildDirectory.dir("install/mcp-client"))
+
+    from(tasks.named<CreateStartScripts>("startScripts")) {
+        into("bin")
+    }
+    from(tasks.named<Jar>("jar")) {
+        into("lib")
+    }
+    from(configurations.runtimeClasspath) {
+        into("lib")
+    }
+}
+
+tasks.register<Sync>("installServerDist") {
+    group = "distribution"
+    description = "Builds a direct server launcher distribution."
+    dependsOn(tasks.named("jar"), serverStartScripts)
+    into(layout.buildDirectory.dir("install/mcp-server"))
+
+    from(serverStartScripts) {
+        into("bin")
+    }
+    from(tasks.named<Jar>("jar")) {
+        into("lib")
+    }
+    from(configurations.runtimeClasspath) {
+        into("lib")
+    }
 }
 
 dependencies {
