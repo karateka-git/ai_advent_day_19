@@ -16,7 +16,7 @@ kotlin {
 }
 
 application {
-    mainClass = "ru.compadre.mcp.bootstrap.BootstrapAppKt"
+    mainClass = "ru.compadre.mcp.AppKt"
     applicationDefaultJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
 
@@ -28,15 +28,15 @@ tasks.register<JavaExec>("runServer") {
     group = "application"
     description = "Runs the MCP server entrypoint."
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("ru.compadre.mcp.server.McpServerAppKt")
+    mainClass.set("ru.compadre.mcp.mcp.server.McpServerAppKt")
 }
 
 tasks.register<JavaExec>("runClient") {
     group = "application"
     description = "Runs the MCP client entrypoint."
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("ru.compadre.mcp.client.McpClientAppKt")
-    args("connect")
+    mainClass.set("ru.compadre.mcp.AppKt")
+    standardInput = System.`in`
 }
 
 dependencies {

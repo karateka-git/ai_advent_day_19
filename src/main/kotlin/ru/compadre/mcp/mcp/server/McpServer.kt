@@ -1,4 +1,4 @@
-package ru.compadre.mcp.server
+package ru.compadre.mcp.mcp.server
 
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions

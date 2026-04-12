@@ -1,4 +1,4 @@
-package ru.compadre.mcp.server
+package ru.compadre.mcp.mcp.server
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

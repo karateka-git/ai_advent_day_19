@@ -1,11 +1,11 @@
-package ru.compadre.mcp.server
+package ru.compadre.mcp.mcp.server
 
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
 import io.modelcontextprotocol.kotlin.sdk.server.mcpStatelessStreamableHttp
 import ru.compadre.mcp.config.McpProjectConfig
 

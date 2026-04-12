@@ -507,7 +507,7 @@
    - форматирует успешный `ConnectResult`;
    - форматирует неуспешный `ConnectResult`;
    - не зависит от `AgentResponse` и MCP SDK-типов.
-4. Перевести `McpClientApp.kt` на использование parser, formatter и `ApplicationCommandHandler`, оставив в файле только composition root и настройку консоли.
+4. Перевести `App.kt` на использование parser, formatter и `ApplicationCommandHandler`, оставив в файле только composition root и настройку консоли.
 5. Добавить локальные unit-проверки presentation-слоя:
    - разбор команды `connect`;
    - форматирование успешного и неуспешного `ConnectResult`.

@@ -72,40 +72,30 @@ $Command
 function Invoke-Utf8GradleClient {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$ProjectRoot
+        [string]$ProjectRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StdoutPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StderrPath
     )
 
-    $psi = [System.Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = "cmd.exe"
-    $psi.Arguments = "/c chcp 65001>nul && .\\gradlew.bat runClient --no-daemon"
-    $psi.WorkingDirectory = $ProjectRoot
-    $psi.UseShellExecute = $false
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
-    $psi.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+    $null = & powershell -ExecutionPolicy Bypass -File (Join-Path $ProjectRoot "scripts\invoke-client-commands.ps1") `
+        -ProjectRoot $ProjectRoot `
+        -Commands @("connect", "exit") `
+        -StdoutPath $StdoutPath `
+        -StderrPath $StderrPath
 
-    $process = [System.Diagnostics.Process]::new()
-    $process.StartInfo = $psi
-
-    try {
-        $process.Start() | Out-Null
-        $stdout = $process.StandardOutput.ReadToEnd()
-        $stderr = $process.StandardError.ReadToEnd()
-        $process.WaitForExit()
-
-        if ($stdout) {
-            [Console]::Out.Write($stdout)
-        }
-
-        if ($stderr) {
-            [Console]::Out.Write($stderr)
-        }
-
-        return $process.ExitCode
-    } finally {
-        $process.Dispose()
+    if (Test-Path $StdoutPath) {
+        [Console]::Out.Write((Get-Content $StdoutPath -Raw))
     }
+
+    if (Test-Path $StderrPath) {
+        [Console]::Out.Write((Get-Content $StderrPath -Raw))
+    }
+
+    return $LASTEXITCODE
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -133,10 +123,16 @@ if ($Headless) {
 
     $serverStdout = Join-Path $tmpDir "server.out"
     $serverStderr = Join-Path $tmpDir "server.err"
+    $clientStdout = Join-Path $tmpDir "client.out"
+    $clientStderr = Join-Path $tmpDir "client.err"
 
-    @($serverStdout, $serverStderr) | ForEach-Object {
+    @($serverStdout, $serverStderr, $clientStdout, $clientStderr) | ForEach-Object {
         if (Test-Path $_) {
-            Remove-Item $_ -Force
+            try {
+                Remove-Item $_ -Force
+            } catch {
+                Remove-Item $_ -Force -ErrorAction SilentlyContinue
+            }
         }
     }
 
@@ -156,7 +152,10 @@ if ($Headless) {
         Write-Output "Server is ready at $serverEndpoint"
         Write-Output "Running client in current console..."
 
-        $clientExitCode = Invoke-Utf8GradleClient -ProjectRoot $projectRoot
+        $clientExitCode = Invoke-Utf8GradleClient `
+            -ProjectRoot $projectRoot `
+            -StdoutPath $clientStdout `
+            -StderrPath $clientStderr
         if ($clientExitCode -ne 0) {
             throw "Client failed with exit code $clientExitCode."
         }

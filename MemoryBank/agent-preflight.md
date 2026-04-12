@@ -35,7 +35,8 @@
 - Базовые команды проекта:
   - сборка: `.\gradlew.bat build`
   - запуск сервера: `.\gradlew.bat runServer`
-  - запуск клиента: `.\gradlew.bat runClient`
+  - запуск интерактивного клиента: `.\gradlew.bat runClient`
+  - scripted-запуск клиента для smoke/e2e: `powershell -ExecutionPolicy Bypass -File .\scripts\invoke-client-commands.ps1 -Commands connect,exit`
   - подготовка ручной проверки: `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1`
   - запуск уже собранного проекта: `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild`
   - сквозная проверка: `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`

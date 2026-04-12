@@ -71,41 +71,13 @@ function Invoke-Utf8GradleClient {
         [string]$StderrPath
     )
 
-    $psi = [System.Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = "cmd.exe"
-    $psi.Arguments = "/c chcp 65001>nul && .\\gradlew.bat runClient --no-daemon"
-    $psi.WorkingDirectory = $ProjectRoot
-    $psi.UseShellExecute = $false
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
-    $psi.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+    $null = & powershell -ExecutionPolicy Bypass -File (Join-Path $ProjectRoot "scripts\invoke-client-commands.ps1") `
+        -ProjectRoot $ProjectRoot `
+        -Commands @("connect", "exit") `
+        -StdoutPath $StdoutPath `
+        -StderrPath $StderrPath
 
-    $process = [System.Diagnostics.Process]::new()
-    $process.StartInfo = $psi
-
-    try {
-        $process.Start() | Out-Null
-        $stdout = $process.StandardOutput.ReadToEnd()
-        $stderr = $process.StandardError.ReadToEnd()
-        $process.WaitForExit()
-        $exitCode = $process.ExitCode
-    } finally {
-        $process.Dispose()
-    }
-
-    [System.IO.File]::WriteAllText($StdoutPath, $stdout, [System.Text.Encoding]::UTF8)
-    [System.IO.File]::WriteAllText($StderrPath, $stderr, [System.Text.Encoding]::UTF8)
-
-    if ($stdout) {
-        [Console]::Out.Write($stdout)
-    }
-
-    if ($stderr) {
-        [Console]::Out.Write($stderr)
-    }
-
-    return $exitCode
+    return $LASTEXITCODE
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot

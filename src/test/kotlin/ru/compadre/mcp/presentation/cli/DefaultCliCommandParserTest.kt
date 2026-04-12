@@ -8,13 +8,12 @@ import ru.compadre.mcp.application.command.ConnectCommand
 
 class DefaultCliCommandParserTest {
     @Test
-    fun parseDefaultsToConnectCommand() {
+    fun parseRejectsEmptyCommand() {
         val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
 
-        val command = parser.parse(emptyArray())
-
-        assertIs<ConnectCommand>(command)
-        assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)
+        assertFailsWith<IllegalArgumentException> {
+            parser.parse(emptyArray())
+        }
     }
 
     @Test
@@ -22,6 +21,16 @@ class DefaultCliCommandParserTest {
         val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
 
         val command = parser.parse(arrayOf("connect"))
+
+        assertIs<ConnectCommand>(command)
+        assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)
+    }
+
+    @Test
+    fun parseAcceptsCommandWithBomPrefix() {
+        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
+
+        val command = parser.parse(arrayOf("\uFEFFconnect"))
 
         assertIs<ConnectCommand>(command)
         assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)

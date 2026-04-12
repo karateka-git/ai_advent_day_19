@@ -42,7 +42,15 @@
 .\gradlew.bat runClient
 ```
 
-Внутри проекта эта задача теперь запускает явную клиентскую команду `connect`, которая отвечает за подключение к серверу, `initialize` и получение `tools/list`.
+Эта задача запускает обычный интерактивный клиент. После старта он показывает приглашение и ждёт ручного ввода команд, например `connect`.
+
+ Scripted-запуск клиента для smoke/e2e-сценариев:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\invoke-client-commands.ps1 -Commands connect,exit
+```
+
+Этот путь предназначен для автоматических проверок и воспроизводимых сценариев. Основной `runClient` не должен быть привязан к автокомандам, поэтому scripted-подача команд теперь живёт в отдельном PowerShell-скрипте.
 
 Подготовка ручной проверки одним запуском:
 
@@ -55,7 +63,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1
 - собирает проект;
 - поднимает сервер в отдельном окне PowerShell;
 - дожидается готовности локального endpoint;
-- открывает клиента в отдельном окне PowerShell.
+- открывает интерактивного клиента в отдельном окне PowerShell.
 
 Для этого репозитория пользовательская фраза `собери проект` по умолчанию трактуется именно как этот workflow ручной проверки, а не как один только `.\gradlew.bat build`.
 
@@ -89,6 +97,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless
 ```
+
+В headless-режиме launcher использует scripted-команду `connect`, потому что интерактивный ввод в текущей консоли там не предполагается.
 
 ## Документация
 
