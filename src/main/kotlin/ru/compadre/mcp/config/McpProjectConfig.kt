@@ -1,4 +1,4 @@
-package ru.compadre.aiadvent.day16.config
+package ru.compadre.mcp.config
 
 /**
  * Общие настройки проекта для локального MCP sandbox.

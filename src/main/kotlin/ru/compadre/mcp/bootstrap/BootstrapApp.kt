@@ -1,4 +1,4 @@
-package ru.compadre.aiadvent.day16.bootstrap
+package ru.compadre.mcp.bootstrap
 
 /**
  * Временная точка входа для каркаса проекта.
@@ -7,5 +7,5 @@ package ru.compadre.aiadvent.day16.bootstrap
  * чтобы дальше можно было развивать их независимо без перестройки сборки.
  */
 fun main() {
-    println("ai_advent_day_16 Kotlin/MCP project skeleton is ready")
+    println("Kotlin/MCP project skeleton is ready")
 }

@@ -1,6 +1,6 @@
-package ru.compadre.aiadvent.day16.client
+package ru.compadre.mcp.client
 
-import ru.compadre.aiadvent.day16.config.McpProjectConfig
+import ru.compadre.mcp.config.McpProjectConfig
 
 /**
  * Временная точка входа клиента для следующего этапа реализации MCP client.

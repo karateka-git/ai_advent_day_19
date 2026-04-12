@@ -16,7 +16,7 @@ kotlin {
 }
 
 application {
-    mainClass = "ru.compadre.aiadvent.day16.bootstrap.BootstrapAppKt"
+    mainClass = "ru.compadre.mcp.bootstrap.BootstrapAppKt"
     applicationDefaultJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
 
@@ -28,14 +28,14 @@ tasks.register<JavaExec>("runServer") {
     group = "application"
     description = "Runs the MCP server entrypoint."
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("ru.compadre.aiadvent.day16.server.McpServerAppKt")
+    mainClass.set("ru.compadre.mcp.server.McpServerAppKt")
 }
 
 tasks.register<JavaExec>("runClient") {
     group = "application"
     description = "Runs the MCP client entrypoint."
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("ru.compadre.aiadvent.day16.client.McpClientAppKt")
+    mainClass.set("ru.compadre.mcp.client.McpClientAppKt")
 }
 
 dependencies {

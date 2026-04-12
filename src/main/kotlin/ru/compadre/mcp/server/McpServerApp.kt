@@ -1,9 +1,9 @@
-package ru.compadre.aiadvent.day16.server
+package ru.compadre.mcp.server
 
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.modelcontextprotocol.kotlin.sdk.server.mcpStreamableHttp
-import ru.compadre.aiadvent.day16.config.McpProjectConfig
+import ru.compadre.mcp.config.McpProjectConfig
 
 /**
  * Точка входа локального MCP server для sandbox-проекта.
@@ -15,7 +15,7 @@ fun main() {
         port = McpProjectConfig.SERVER_PORT,
     ) {
         mcpStreamableHttp(path = McpProjectConfig.MCP_PATH) {
-            createDay16McpServer()
+            createMcpServer()
         }
     }
 

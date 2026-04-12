@@ -1,13 +1,13 @@
-package ru.compadre.aiadvent.day16.server
+package ru.compadre.mcp.server
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class Day16McpServerTest {
+class McpServerTest {
     @Test
     fun serverRegistersExpectedTools() {
-        val server = createDay16McpServer()
+        val server = createMcpServer()
 
         assertEquals(setOf("ping", "echo"), server.tools.keys)
         assertTrue(server.tools["ping"] != null)
