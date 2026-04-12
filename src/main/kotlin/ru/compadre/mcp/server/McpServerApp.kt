@@ -1,8 +1,12 @@
 package ru.compadre.mcp.server
 
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
-import io.modelcontextprotocol.kotlin.sdk.server.mcpStreamableHttp
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
+import io.modelcontextprotocol.kotlin.sdk.server.mcpStatelessStreamableHttp
 import ru.compadre.mcp.config.McpProjectConfig
 
 /**
@@ -13,12 +17,22 @@ fun main() {
         factory = CIO,
         host = McpProjectConfig.SERVER_HOST,
         port = McpProjectConfig.SERVER_PORT,
-    ) {
-        mcpStreamableHttp(path = McpProjectConfig.MCP_PATH) {
-            createMcpServer()
-        }
-    }
+        module = Application::configureMcpServer,
+    )
 
     println("Starting MCP server at ${McpProjectConfig.defaultEndpoint()}")
     server.start(wait = true)
+}
+
+/**
+ * Конфигурирует Ktor-приложение для работы с локальным MCP server по stateless Streamable HTTP.
+ */
+fun Application.configureMcpServer() {
+    install(ContentNegotiation) {
+        json()
+    }
+
+    mcpStatelessStreamableHttp(path = McpProjectConfig.MCP_PATH) {
+        createMcpServer()
+    }
 }
