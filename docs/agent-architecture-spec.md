@@ -454,6 +454,26 @@
 3. Реализовать `ApplicationCommandHandler`.
 4. Подключить handler к агенту.
 
+Подэтапы внедрения:
+
+1. Детализировать шаги `Этапа 4` в ТЗ и зафиксировать целевой vertical slice:
+   - `connect` должен начинаться с `Command`;
+   - `ApplicationCommandHandler` должен преобразовывать команду в агентный запрос;
+   - результат верхнему слою должен возвращаться в форме `CommandResult`, а не `AgentResponse`.
+2. Добавить рабочую реализацию `ApplicationCommandHandler`, которая:
+   - принимает `ConnectCommand`;
+   - вызывает `Agent`;
+   - преобразует `AgentResponse.ConnectSuccess` в `ConnectResult`;
+   - преобразует `AgentResponse.Failure` в неуспешный `ConnectResult`.
+3. Перевести текущий клиентский сценарий `connect` на использование `ApplicationCommandHandler` вместо прямого вызова `Agent`.
+4. Добавить локальные unit-проверки на application-слой:
+   - успешное преобразование `ConnectCommand` -> `ConnectResult`;
+   - преобразование агентной ошибки в неуспешный `ConnectResult`.
+5. Прогнать:
+   - `.\gradlew.bat test`
+   - `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`
+6. Зафиксировать результат `Этапа 4` в журнале реализации агентной архитектуры.
+
 ### Этап 5. Выделение CLI Presentation-Слоя
 
 Цель:
