@@ -55,4 +55,27 @@ class AvailableAgentCommandResolverTest {
         assertEquals(1, result.size)
         assertEquals(AgentCommandId.TOOL_POST, result.single().commandId)
     }
+
+    @Test
+    fun resolveDoesNotFallbackToAnotherServerWhenDefinitionUsesFixedRouting() {
+        val resolver = AvailableAgentCommandResolver(
+            definitions = supportedAgentCommandDefinitions(),
+        )
+
+        val result = resolver.resolve(
+            servers = listOf(
+                PreparedMcpServer(
+                    serverId = McpServerId("secondary"),
+                    endpoint = "http://127.0.0.1:3100/mcp",
+                    prepared = true,
+                    tools = listOf(
+                        McpToolDescriptor(name = "list_posts", title = "List Posts"),
+                        McpToolDescriptor(name = "fetch_post", title = "Fetch Post"),
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(0, result.size)
+    }
 }

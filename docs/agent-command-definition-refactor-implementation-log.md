@@ -150,3 +150,40 @@
 Следующий шаг:
 
 - перейти к `Этапу 4` и добить интеграцию, локальные тесты и финальную фиксацию журнала этого ТЗ.
+
+## Этап 4. Интеграция, тесты и синхронизация журналов
+
+Статус: завершён
+
+Цель этапа:
+
+- подтвердить, что новая модель command definitions работает end-to-end внутри текущей архитектуры;
+- закрыть refactor проверками и итоговой фиксацией в unified log.
+
+Выполненные действия:
+
+1. Усилен unit-набор для resolver-а:
+   - [AvailableAgentCommandResolverTest.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/src/test/kotlin/ru/compadre/mcp/agent/bootstrap/commands/AvailableAgentCommandResolverTest.kt) теперь явно проверяет, что `FixedServer` не делает неявный fallback на другой сервер, даже если тот публикует нужный tool.
+2. Выполнен прогон `.\gradlew.bat test` после завершения всех refactor-правок.
+3. Выполнена project-level headless проверка:
+   - `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless`
+4. Unified implementation log дополнен итогами всех этапов и закрыт без дополнительных изменений в `README`, как и требовалось в рамках этого ТЗ.
+
+Принятые решения:
+
+- считать отсутствие fallback на другой сервер корректным текущим поведением для `FixedServer`, потому что именно это делает маршрутизацию команды явной и управляемой;
+- не расширять этот проход до новых UX/README-правок, чтобы оставить refactor сфокусированным только на capability-mapping.
+
+Проверка:
+
+- `.\gradlew.bat test` завершается успешно;
+- `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless` проходит успешно;
+- command definitions, typed ids и fixed routing работают в общей цепочке приложения без регрессии текущего CLI-контракта.
+
+Коммиты этапа:
+
+- текущий коммит этапа — финальная проверка и закрытие unified implementation log.
+
+Следующий шаг:
+
+- отдельным последующим блоком можно дорабатывать UX, README и дальнейшую эволюцию routing policy, не смешивая это с уже завершённым refactor-ом command definitions.
