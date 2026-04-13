@@ -174,3 +174,67 @@
 Следующий шаг:
 
 - перейти к `Этапу 4` и перестроить `workflow` и `presentation` под новую модель без пользовательского `connect`.
+
+## Этап 4. Перестройка workflow и presentation под новую модель
+
+Статус: завершён
+
+Цель этапа:
+
+- убрать пользовательский `connect` из `workflow` и `presentation`;
+- перевести верхние слои на agent-level вызов доступных команд по `commandId`;
+- подготовить presentation-friendly результат стартовой подготовки агента для следующего этапа UX.
+
+Выполненные действия:
+
+1. Для `Этапа 4` в `docs/mcp-agent-capability-bootstrap-spec.md` добавлены подэтапы внедрения, чтобы явно зафиксировать:
+   - удаление `ConnectCommand` и `ConnectResult` из пользовательского CLI-контракта;
+   - перевод `workflow` на `AgentRequest.CallAvailableCommand`;
+   - передачу результата подготовки агента в presentation без server-level деталей.
+2. Из `workflow` удалены пользовательские контракты `ConnectCommand` и `ConnectResult`.
+3. В `workflow` добавлен новый bridge-сценарий `PrepareAgentCommand -> AgentPreparationResult`, который переводит `AgentResponse.PreparationSuccess` в presentation-friendly список доступных CLI-команд.
+4. `ToolPostCommand` и `ToolPostsCommand` больше не хранят endpoint и не знают о конкретных MCP `toolName`.
+5. `DefaultWorkflowCommandHandler` теперь:
+   - делегирует `tool post` и `tool posts` через `AgentRequest.CallAvailableCommand`;
+   - возвращает `ToolCallResult` в терминах пользовательской команды, а не в терминах endpoint/tool.
+6. `ToolCallResult` упрощён до пользовательского контракта:
+   - `commandText`;
+   - `successful`;
+   - `content`;
+   - `errorMessage`.
+7. `DefaultCliCommandParser` больше не принимает и не распознаёт `connect`, а разбирает только прикладные команды:
+   - `tool posts`;
+   - `tool post <postId>`.
+8. `DefaultCliOutputFormatter` больше не форматирует `ConnectResult` и не показывает server-level детали маршрутизации. Вместо этого он:
+   - умеет выводить `AgentPreparationResult`;
+   - форматирует ошибки и успех `ToolCallResult` через пользовательскую команду.
+9. Из `App` убраны:
+   - parser dependency на default endpoint;
+   - presentation-level флаг `isConnected`;
+   - guard на ручной `connect` перед `tool ...`;
+   - help-описание команды `connect`.
+10. Обновлены unit-тесты `workflow` и `presentation` под новый CLI-контракт.
+11. Выполнен прогон `.\gradlew.bat test`.
+
+Принятые решения:
+
+- на этом этапе окончательно считать `connect` внутренней инфраструктурной операцией, а не пользовательским сценарием;
+- не выводить в CLI endpoint и MCP `toolName`, даже если они присутствуют в agent/mcp-слоях;
+- подготовить в `workflow` и `presentation` отдельный результат `AgentPreparationResult`, чтобы следующий этап UX уже опирался на новый контракт, а не лез напрямую в agent-state.
+
+Проверка:
+
+- parser отклоняет `connect` и принимает только `tool posts` и `tool post <postId>`;
+- `workflow` вызывает агент через `CallAvailableCommand`, а не через прямой `CallTool` с endpoint/toolName;
+- formatter не печатает server-level данные при вызове прикладной команды;
+- `.\gradlew.bat test` завершается успешно.
+
+Коммиты этапа:
+
+- `a5620b1` — детализация этапа 4 capability bootstrap;
+- `2b4bf26` — удаление пользовательского `connect` из workflow/presentation и перевод CLI на available-command модель;
+- текущий коммит этапа — фиксация результата этапа 4 в implementation log.
+
+Следующий шаг:
+
+- перейти к `Этапу 5` и встроить стартовую подготовку агента в UX приложения с сообщением `Подготовка агента...` и финальным приветствием после завершения discovery.
