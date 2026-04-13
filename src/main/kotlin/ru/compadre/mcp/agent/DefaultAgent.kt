@@ -1,7 +1,7 @@
 package ru.compadre.mcp.agent
 
 import ru.compadre.mcp.agent.bootstrap.AgentCapabilityRegistry
-import ru.compadre.mcp.agent.bootstrap.buildAvailableAgentCommands
+import ru.compadre.mcp.agent.bootstrap.commands.AvailableAgentCommandResolver
 import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
@@ -14,6 +14,7 @@ import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
 class DefaultAgent(
     private val mcpClient: McpClient,
     private val capabilityRegistry: AgentCapabilityRegistry = AgentCapabilityRegistry(),
+    private val commandResolver: AvailableAgentCommandResolver = AvailableAgentCommandResolver(),
 ) : Agent {
     override suspend fun handle(request: AgentRequest): AgentResponse = when (request) {
         is AgentRequest.Prepare -> handlePrepare(request)
@@ -27,7 +28,7 @@ class DefaultAgent(
             val preparedServers = request.servers.map { server -> prepareServer(server) }
             val snapshot = AgentCapabilitySnapshot(
                 servers = preparedServers,
-                availableCommands = buildAvailableAgentCommands(preparedServers),
+                availableCommands = commandResolver.resolve(preparedServers),
             )
 
             capabilityRegistry.replace(snapshot)
