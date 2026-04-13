@@ -153,4 +153,5 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headl
 - ТЗ по агентной архитектуре: [docs/agent-architecture-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/agent-architecture-spec.md)
 - журнал реализации агентной архитектуры: [docs/agent-architecture-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/agent-architecture-implementation-log.md)
 - ТЗ по интеграции MCP tool: [docs/mcp-tool-integration-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-tool-integration-spec.md)
+- журнал реализации интеграции MCP tool: [docs/mcp-tool-integration-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-tool-integration-implementation-log.md)
 - контракт первого MCP tool: [docs/mcp-tool-integration-contract.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-tool-integration-contract.md)
