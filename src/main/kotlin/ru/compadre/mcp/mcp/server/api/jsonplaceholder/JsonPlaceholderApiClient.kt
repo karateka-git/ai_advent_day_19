@@ -7,7 +7,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.models.JsonPlaceholderPost
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.common.models.JsonPlaceholderPost
 
 /**
  * Контракт доступа к внешнему API `JSONPlaceholder`.
@@ -20,6 +20,14 @@ internal interface JsonPlaceholderApiClient {
      * @return найденная публикация или `null`, если публикация не существует
      */
     suspend fun fetchPost(postId: Int): JsonPlaceholderPost?
+
+    /**
+     * Возвращает первые публикации из API `JSONPlaceholder`.
+     *
+     * @param limit максимальное количество публикаций
+     * @return список публикаций
+     */
+    suspend fun fetchPosts(limit: Int): List<JsonPlaceholderPost>
 }
 
 /**
@@ -41,6 +49,17 @@ internal class DefaultJsonPlaceholderApiClient(
             HttpStatusCode.NotFound -> null
             else -> error(
                 "Mock API вернул неожиданный статус `${response.status.value}` для публикации `$postId`.",
+            )
+        }
+    }
+
+    override suspend fun fetchPosts(limit: Int): List<JsonPlaceholderPost> {
+        val response = httpClient.get("$baseUrl/posts")
+
+        return when (response.status) {
+            HttpStatusCode.OK -> response.body<List<JsonPlaceholderPost>>().take(limit)
+            else -> error(
+                "Mock API вернул неожиданный статус `${response.status.value}` при запросе списка публикаций.",
             )
         }
     }

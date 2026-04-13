@@ -34,6 +34,11 @@ class DefaultCliOutputFormatterTest {
                     title = "Fetch Post",
                     description = "Получает публикацию из mock API JSONPlaceholder по идентификатору.",
                 ),
+                ConnectToolResult(
+                    name = "list_posts",
+                    title = "List Posts",
+                    description = "Возвращает первые публикации из mock API JSONPlaceholder.",
+                ),
             ),
         )
 
@@ -43,8 +48,9 @@ class DefaultCliOutputFormatterTest {
             "Версия сервера: 0.1.0",
             "Заголовок сервера: Local MCP Server",
             "Инструкции сервера: Локальный MCP server для sandbox-проекта.",
-            "CLI-команды для доступных инструментов (1):",
+            "CLI-команды для доступных инструментов (2):",
             "1. Fetch Post [fetch_post] -> tool post <postId>",
+            "2. List Posts [list_posts] -> tool posts",
         ).joinToString(System.lineSeparator())
 
         assertEquals(expected, formatter.format(result))

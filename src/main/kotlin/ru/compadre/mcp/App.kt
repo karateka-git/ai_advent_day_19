@@ -112,6 +112,7 @@ private fun configureLogging() {
 private fun helpText(): String = listOf(
     "Доступные команды:",
     "connect - подключиться к MCP-серверу и показать доступные из CLI инструменты.",
+    "tool posts - показать первые 10 публикаций из JSONPlaceholder.",
     "tool post <postId> - получить публикацию из JSONPlaceholder по идентификатору.",
     "help - показать это сообщение.",
     "exit - завершить сессию клиента.",

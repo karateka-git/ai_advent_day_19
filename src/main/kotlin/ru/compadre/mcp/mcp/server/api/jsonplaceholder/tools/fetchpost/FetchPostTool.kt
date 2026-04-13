@@ -10,7 +10,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import ru.compadre.mcp.mcp.server.api.jsonplaceholder.JsonPlaceholderApiClient
-import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.models.JsonPlaceholderPost
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.common.models.JsonPlaceholderPost
 
 /**
  * Возвращает `inputSchema` для инструмента `fetch_post`.

@@ -7,6 +7,7 @@ import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.ConnectCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
+import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.result.CommandResult
 import ru.compadre.mcp.workflow.result.ConnectResult
 import ru.compadre.mcp.workflow.result.ConnectToolResult
@@ -21,6 +22,7 @@ class DefaultWorkflowCommandHandler(
     override suspend fun handle(command: Command): CommandResult = when (command) {
         is ConnectCommand -> handleConnect(command)
         is ToolPostCommand -> handleToolPost(command)
+        is ToolPostsCommand -> handleToolPosts(command)
     }
 
     private suspend fun handleConnect(command: ConnectCommand): ConnectResult {
@@ -88,6 +90,44 @@ class DefaultWorkflowCommandHandler(
             is AgentResponse.ConnectSuccess -> ToolCallResult(
                 endpoint = endpoint,
                 toolName = "fetch_post",
+                successful = false,
+                errorMessage = "Агент вернул результат подключения для сценария вызова инструмента.",
+            )
+        }
+    }
+
+    private suspend fun handleToolPosts(command: ToolPostsCommand): ToolCallResult {
+        val endpoint = command.endpointOverride
+            ?: error("Для ToolPostsCommand требуется endpoint на этапе до внедрения presentation-слоя.")
+
+        return when (
+            val response = agent.handle(
+                AgentRequest.CallTool(
+                    endpoint = endpoint,
+                    toolCallRequest = McpToolCallRequest(
+                        toolName = "list_posts",
+                        arguments = emptyMap(),
+                    ),
+                ),
+            )
+        ) {
+            is AgentResponse.ToolCallSuccess -> ToolCallResult(
+                endpoint = response.endpoint,
+                toolName = response.result.toolName,
+                successful = !response.result.isError,
+                content = response.result.content,
+                errorMessage = response.result.content.takeIf { response.result.isError }
+                    ?.joinToString(separator = System.lineSeparator()),
+            )
+            is AgentResponse.Failure -> ToolCallResult(
+                endpoint = endpoint,
+                toolName = "list_posts",
+                successful = false,
+                errorMessage = response.message,
+            )
+            is AgentResponse.ConnectSuccess -> ToolCallResult(
+                endpoint = endpoint,
+                toolName = "list_posts",
                 successful = false,
                 errorMessage = "Агент вернул результат подключения для сценария вызова инструмента.",
             )

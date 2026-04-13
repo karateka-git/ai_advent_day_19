@@ -6,6 +6,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import ru.compadre.mcp.workflow.command.ConnectCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
+import ru.compadre.mcp.workflow.command.ToolPostsCommand
 
 class DefaultCliCommandParserTest {
     @Test
@@ -55,6 +56,16 @@ class DefaultCliCommandParserTest {
         assertIs<ToolPostCommand>(command)
         assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)
         assertEquals(1, command.postId)
+    }
+
+    @Test
+    fun parseAcceptsToolPostsCommand() {
+        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
+
+        val command = parser.parse(arrayOf("tool", "posts"))
+
+        assertIs<ToolPostsCommand>(command)
+        assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)
     }
 
     @Test

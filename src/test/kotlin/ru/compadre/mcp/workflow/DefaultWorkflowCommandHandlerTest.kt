@@ -12,6 +12,7 @@ import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 import ru.compadre.mcp.workflow.command.ConnectCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
+import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.result.ConnectResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
@@ -124,5 +125,38 @@ class DefaultWorkflowCommandHandlerTest {
         assertEquals("tool agent failure", result.errorMessage)
         assertEquals("fetch_post", result.toolName)
         assertEquals("http://127.0.0.1:3000/mcp", result.endpoint)
+    }
+
+    @Test
+    fun toolPostsCommandReturnsSuccessfulToolCallResult() = runBlocking {
+        val handler = DefaultWorkflowCommandHandler(
+            agent = object : Agent {
+                override suspend fun handle(request: AgentRequest): AgentResponse {
+                    val toolRequest = request as AgentRequest.CallTool
+                    assertEquals("list_posts", toolRequest.toolCallRequest.toolName)
+                    assertEquals(emptyMap(), toolRequest.toolCallRequest.arguments)
+
+                    return AgentResponse.ToolCallSuccess(
+                        endpoint = toolRequest.endpoint,
+                        result = McpToolCallResult(
+                            toolName = "list_posts",
+                            isError = false,
+                            content = listOf("Первые 10 публикаций:", "1. sunt aut facere"),
+                        ),
+                    )
+                }
+            },
+        )
+
+        val result = handler.handle(
+            ToolPostsCommand(
+                endpointOverride = "http://127.0.0.1:3000/mcp",
+            ),
+        )
+
+        assertIs<ToolCallResult>(result)
+        assertEquals(true, result.successful)
+        assertEquals("list_posts", result.toolName)
+        assertEquals(listOf("Первые 10 публикаций:", "1. sunt aut facere"), result.content)
     }
 }

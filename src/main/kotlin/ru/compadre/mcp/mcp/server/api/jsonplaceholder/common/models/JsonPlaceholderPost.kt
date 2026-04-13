@@ -1,4 +1,4 @@
-package ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.models
+package ru.compadre.mcp.mcp.server.api.jsonplaceholder.common.models
 
 import kotlinx.serialization.Serializable
 

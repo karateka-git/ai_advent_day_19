@@ -17,6 +17,8 @@ import ru.compadre.mcp.mcp.server.api.jsonplaceholder.DefaultJsonPlaceholderApiC
 import ru.compadre.mcp.mcp.server.api.jsonplaceholder.JsonPlaceholderApiClient
 import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.fetchPostToolResult
 import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.fetchPostToolSchema
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.listposts.listPostsToolResult
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.listposts.listPostsToolSchema
 
 /**
  * Собирает MCP server для локального sandbox-проекта.
@@ -74,6 +76,17 @@ internal fun createMcpServer(
     ) { request ->
         fetchPostToolResult(
             arguments = request.arguments,
+            jsonPlaceholderApiClient = jsonPlaceholderApiClient,
+        )
+    }
+
+    addTool(
+        name = "list_posts",
+        title = "List Posts",
+        description = "Возвращает первые публикации из mock API JSONPlaceholder.",
+        inputSchema = listPostsToolSchema(),
+    ) {
+        listPostsToolResult(
             jsonPlaceholderApiClient = jsonPlaceholderApiClient,
         )
     }

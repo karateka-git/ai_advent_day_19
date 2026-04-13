@@ -8,7 +8,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import ru.compadre.mcp.mcp.server.api.jsonplaceholder.JsonPlaceholderApiClient
-import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.models.JsonPlaceholderPost
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.common.models.JsonPlaceholderPost
 
 class FetchPostToolTest {
     @Test
@@ -24,6 +24,8 @@ class FetchPostToolTest {
                     title = "Тестовый заголовок",
                     body = "Тестовый текст",
                 )
+
+                override suspend fun fetchPosts(limit: Int): List<JsonPlaceholderPost> = emptyList()
             },
         )
 
@@ -48,6 +50,8 @@ class FetchPostToolTest {
                 override suspend fun fetchPost(postId: Int): JsonPlaceholderPost? {
                     error("Клиент не должен вызываться при ошибке валидации.")
                 }
+
+                override suspend fun fetchPosts(limit: Int): List<JsonPlaceholderPost> = emptyList()
             },
         )
 

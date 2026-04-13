@@ -59,6 +59,11 @@ class DefaultCliOutputFormatter : CliOutputFormatter {
     }
 
     private fun toCliToolUsage(tool: ConnectToolResult): CliToolUsage? = when (tool.name) {
+        "list_posts" -> CliToolUsage(
+            name = tool.name,
+            title = tool.title?.takeIf { it.isNotBlank() } ?: "List Posts",
+            command = "tool posts",
+        )
         "fetch_post" -> CliToolUsage(
             name = tool.name,
             title = tool.title?.takeIf { it.isNotBlank() } ?: "Fetch Post",

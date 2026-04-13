@@ -12,6 +12,7 @@ import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.ConnectCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
+import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.result.CommandResult
 import ru.compadre.mcp.workflow.result.ConnectResult
 import ru.compadre.mcp.workflow.result.ConnectToolResult
@@ -52,6 +53,16 @@ class ArchitectureContractsTest {
         assertIs<ToolPostCommand>(command)
         assertEquals("http://localhost:3000/mcp", command.endpointOverride)
         assertEquals(1, command.postId)
+    }
+
+    @Test
+    fun toolPostsCommandImplementsBaseCommandContract() {
+        val command: Command = ToolPostsCommand(
+            endpointOverride = "http://localhost:3000/mcp",
+        )
+
+        assertIs<ToolPostsCommand>(command)
+        assertEquals("http://localhost:3000/mcp", command.endpointOverride)
     }
 
     @Test
