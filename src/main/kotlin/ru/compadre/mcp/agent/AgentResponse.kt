@@ -1,5 +1,6 @@
 package ru.compadre.mcp.agent
 
+import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
 import ru.compadre.mcp.mcp.client.model.McpServerInfo
 import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
@@ -8,6 +9,13 @@ import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
  * Базовый контракт ответа агента.
  */
 sealed interface AgentResponse {
+    /**
+     * Успешный результат стартовой подготовки и discovery MCP-возможностей.
+     */
+    data class PreparationSuccess(
+        val snapshot: AgentCapabilitySnapshot,
+    ) : AgentResponse
+
     /**
      * Успешный результат подключения и чтения базовой MCP-информации.
      */

@@ -55,6 +55,11 @@ class DefaultWorkflowCommandHandler(
                 connected = false,
                 errorMessage = "Агент вернул результат вызова инструмента для сценария connect.",
             )
+            is AgentResponse.PreparationSuccess -> ConnectResult(
+                endpoint = endpoint,
+                connected = false,
+                errorMessage = "Агент вернул результат подготовки вместо сценария connect.",
+            )
         }
     }
 
@@ -93,6 +98,12 @@ class DefaultWorkflowCommandHandler(
                 successful = false,
                 errorMessage = "Агент вернул результат подключения для сценария вызова инструмента.",
             )
+            is AgentResponse.PreparationSuccess -> ToolCallResult(
+                endpoint = endpoint,
+                toolName = "fetch_post",
+                successful = false,
+                errorMessage = "Агент вернул результат подготовки вместо сценария вызова инструмента.",
+            )
         }
     }
 
@@ -130,6 +141,12 @@ class DefaultWorkflowCommandHandler(
                 toolName = "list_posts",
                 successful = false,
                 errorMessage = "Агент вернул результат подключения для сценария вызова инструмента.",
+            )
+            is AgentResponse.PreparationSuccess -> ToolCallResult(
+                endpoint = endpoint,
+                toolName = "list_posts",
+                successful = false,
+                errorMessage = "Агент вернул результат подготовки вместо сценария вызова инструмента.",
             )
         }
     }

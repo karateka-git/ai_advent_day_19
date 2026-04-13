@@ -1,5 +1,7 @@
 package ru.compadre.mcp.config
 
+import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
+
 /**
  * Общие настройки проекта для локального MCP sandbox.
  */
@@ -9,4 +11,14 @@ object McpProjectConfig {
     const val MCP_PATH: String = "/mcp"
 
     fun defaultEndpoint(): String = "http://$SERVER_HOST:$SERVER_PORT$MCP_PATH"
+
+    /**
+     * Возвращает стартовый список известных MCP-серверов для подготовки агента.
+     */
+    fun knownMcpServers(): List<KnownMcpServer> = listOf(
+        KnownMcpServer(
+            serverId = "local_mcp_server",
+            endpoint = defaultEndpoint(),
+        ),
+    )
 }

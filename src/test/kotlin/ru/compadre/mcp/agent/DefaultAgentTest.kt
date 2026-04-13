@@ -1,5 +1,7 @@
 package ru.compadre.mcp.agent
 
+import ru.compadre.mcp.agent.bootstrap.AgentCapabilityRegistry
+import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,6 +14,102 @@ import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 
 class DefaultAgentTest {
+    @Test
+    fun prepareRequestCollectsSuccessfulServersAndStoresSnapshot() = runBlocking {
+        val registry = AgentCapabilityRegistry()
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot = McpConnectionSnapshot(
+                    endpoint = endpoint,
+                    serverInfo = McpServerInfo(
+                        name = "local_mcp_server",
+                        version = "0.1.0",
+                        title = "Local MCP Server",
+                    ),
+                    tools = listOf(
+                        McpToolDescriptor(name = "fetch_post", title = "Fetch Post"),
+                        McpToolDescriptor(name = "list_posts", title = "List Posts"),
+                    ),
+                )
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                }
+            },
+            capabilityRegistry = registry,
+        )
+
+        val response = agent.handle(
+            AgentRequest.Prepare(
+                servers = listOf(
+                    KnownMcpServer(
+                        serverId = "local_mcp_server",
+                        endpoint = "http://127.0.0.1:3000/mcp",
+                    ),
+                ),
+            ),
+        )
+
+        assertIs<AgentResponse.PreparationSuccess>(response)
+        assertEquals(1, response.snapshot.servers.size)
+        assertEquals(true, response.snapshot.servers.single().prepared)
+        assertEquals("local_mcp_server", response.snapshot.servers.single().serverId)
+        assertEquals(2, response.snapshot.servers.single().tools.size)
+        assertEquals(response.snapshot, registry.snapshot())
+    }
+
+    @Test
+    fun prepareRequestKeepsUnavailableServerInsideSnapshot() = runBlocking {
+        val registry = AgentCapabilityRegistry()
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot =
+                    if (endpoint.contains("broken")) {
+                        error("server unavailable")
+                    } else {
+                        McpConnectionSnapshot(
+                            endpoint = endpoint,
+                            serverInfo = McpServerInfo(
+                                name = "local_mcp_server",
+                                version = "0.1.0",
+                                title = "Local MCP Server",
+                            ),
+                            tools = listOf(
+                                McpToolDescriptor(name = "fetch_post", title = "Fetch Post"),
+                            ),
+                        )
+                    }
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                }
+            },
+            capabilityRegistry = registry,
+        )
+
+        val response = agent.handle(
+            AgentRequest.Prepare(
+                servers = listOf(
+                    KnownMcpServer(
+                        serverId = "healthy",
+                        endpoint = "http://127.0.0.1:3000/mcp",
+                    ),
+                    KnownMcpServer(
+                        serverId = "broken",
+                        endpoint = "http://127.0.0.1:3999/mcp-broken",
+                    ),
+                ),
+            ),
+        )
+
+        assertIs<AgentResponse.PreparationSuccess>(response)
+        assertEquals(2, response.snapshot.servers.size)
+        assertEquals(true, response.snapshot.servers.first().prepared)
+        assertEquals(false, response.snapshot.servers.last().prepared)
+        assertEquals("server unavailable", response.snapshot.servers.last().errorMessage)
+        assertEquals(response.snapshot, registry.snapshot())
+    }
+
     @Test
     fun connectRequestReturnsNormalizedSuccessResponse() = runBlocking {
         val agent = DefaultAgent(

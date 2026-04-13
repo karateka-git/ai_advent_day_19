@@ -5,6 +5,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
+import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
+import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
+import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
 import ru.compadre.mcp.mcp.client.model.McpServerInfo
 import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
@@ -111,6 +114,22 @@ class ArchitectureContractsTest {
     }
 
     @Test
+    fun agentPrepareRequestKeepsKnownServers() {
+        val request: AgentRequest = AgentRequest.Prepare(
+            servers = listOf(
+                KnownMcpServer(
+                    serverId = "local_mcp_server",
+                    endpoint = "http://127.0.0.1:3000/mcp",
+                ),
+            ),
+        )
+
+        assertIs<AgentRequest.Prepare>(request)
+        assertEquals(1, request.servers.size)
+        assertEquals("local_mcp_server", request.servers.single().serverId)
+    }
+
+    @Test
     fun agentToolCallRequestKeepsEndpointAndToolPayload() {
         val request: AgentRequest = AgentRequest.CallTool(
             endpoint = "http://127.0.0.1:3000/mcp",
@@ -141,5 +160,24 @@ class ArchitectureContractsTest {
         assertEquals("fetch_post", response.result.toolName)
         assertEquals(false, response.result.isError)
         assertEquals(listOf("Публикация #1"), response.result.content)
+    }
+
+    @Test
+    fun agentPreparationResponseKeepsCapabilitySnapshot() {
+        val response: AgentResponse = AgentResponse.PreparationSuccess(
+            snapshot = AgentCapabilitySnapshot(
+                servers = listOf(
+                    PreparedMcpServer(
+                        serverId = "local_mcp_server",
+                        endpoint = "http://127.0.0.1:3000/mcp",
+                        prepared = true,
+                    ),
+                ),
+            ),
+        )
+
+        assertIs<AgentResponse.PreparationSuccess>(response)
+        assertEquals(1, response.snapshot.servers.size)
+        assertEquals(true, response.snapshot.servers.single().prepared)
     }
 }
