@@ -29,6 +29,11 @@ class DefaultCliOutputFormatterTest {
                     title = "Echo",
                     description = "Возвращает переданную строку обратно клиенту.",
                 ),
+                ConnectToolResult(
+                    name = "fetch_post",
+                    title = "Fetch Post",
+                    description = "Получает публикацию из mock API JSONPlaceholder по идентификатору.",
+                ),
             ),
         )
 
@@ -38,9 +43,8 @@ class DefaultCliOutputFormatterTest {
             "Версия сервера: 0.1.0",
             "Заголовок сервера: Local MCP Server",
             "Инструкции сервера: Локальный MCP server для sandbox-проекта.",
-            "Доступные инструменты (2):",
-            "1. Ping [ping] - Возвращает короткий ответ сервера для проверки доступности.",
-            "2. Echo [echo] - Возвращает переданную строку обратно клиенту.",
+            "CLI-команды для доступных инструментов (1):",
+            "1. Fetch Post [fetch_post] -> tool post <postId>",
         ).joinToString(System.lineSeparator())
 
         assertEquals(expected, formatter.format(result))

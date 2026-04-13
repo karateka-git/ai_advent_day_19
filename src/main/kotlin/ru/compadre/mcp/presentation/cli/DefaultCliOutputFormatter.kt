@@ -2,6 +2,7 @@ package ru.compadre.mcp.presentation.cli
 
 import ru.compadre.mcp.workflow.result.CommandResult
 import ru.compadre.mcp.workflow.result.ConnectResult
+import ru.compadre.mcp.workflow.result.ConnectToolResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 
 /**
@@ -21,6 +22,8 @@ class DefaultCliOutputFormatter : CliOutputFormatter {
             }.joinToString(separator = System.lineSeparator())
         }
 
+        val cliTools = result.tools.mapNotNull(::toCliToolUsage)
+
         val lines = buildList {
             add("Подключение к MCP-серверу установлено: ${result.endpoint}")
             add("Имя сервера: ${result.serverName ?: "<неизвестно>"}")
@@ -28,14 +31,12 @@ class DefaultCliOutputFormatter : CliOutputFormatter {
             add("Заголовок сервера: ${result.serverTitle ?: "<неизвестно>"}")
             add("Инструкции сервера: ${result.serverInstructions ?: "<нет>"}")
 
-            if (result.tools.isEmpty()) {
-                add("Доступные инструменты: <нет>")
+            if (cliTools.isEmpty()) {
+                add("CLI-команды для доступных инструментов: <нет>")
             } else {
-                add("Доступные инструменты (${result.tools.size}):")
-                result.tools.forEachIndexed { index, tool ->
-                    val title = tool.title?.takeIf { it.isNotBlank() } ?: tool.name
-                    val description = tool.description?.takeIf { it.isNotBlank() } ?: "Описание не указано."
-                    add("${index + 1}. $title [${tool.name}] - $description")
+                add("CLI-команды для доступных инструментов (${cliTools.size}):")
+                cliTools.forEachIndexed { index, tool ->
+                    add("${index + 1}. ${tool.title} [${tool.name}] -> ${tool.command}")
                 }
             }
         }
@@ -56,4 +57,19 @@ class DefaultCliOutputFormatter : CliOutputFormatter {
             addAll(result.content)
         }.joinToString(separator = System.lineSeparator())
     }
+
+    private fun toCliToolUsage(tool: ConnectToolResult): CliToolUsage? = when (tool.name) {
+        "fetch_post" -> CliToolUsage(
+            name = tool.name,
+            title = tool.title?.takeIf { it.isNotBlank() } ?: "Fetch Post",
+            command = "tool post <postId>",
+        )
+        else -> null
+    }
 }
+
+private data class CliToolUsage(
+    val name: String,
+    val title: String,
+    val command: String,
+)

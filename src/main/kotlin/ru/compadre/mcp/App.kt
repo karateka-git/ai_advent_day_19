@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets
  */
 fun main(args: Array<String>): Unit = runBlocking {
     configureUtf8Console()
+    configureLogging()
 
     val commandParser: CliCommandParser = DefaultCliCommandParser(McpProjectConfig::defaultEndpoint)
     val commandHandler: WorkflowCommandHandler = DefaultWorkflowCommandHandler(
@@ -67,7 +68,7 @@ private suspend fun runInteractiveShell(
     outputFormatter: CliOutputFormatter,
 ) {
     println("MCP-клиент готов к работе.")
-    println("Доступные команды: connect, tool post <postId>, help, exit")
+    println("Введите `help`, чтобы увидеть доступные команды.")
 
     while (true) {
         print("> ")
@@ -90,7 +91,7 @@ private suspend fun runInteractiveShell(
             }
 
             "help" -> {
-                println("Доступные команды: connect, tool post <postId>, help, exit")
+                println(helpText())
                 continue
             }
         }
@@ -103,6 +104,18 @@ private suspend fun runInteractiveShell(
         )
     }
 }
+
+private fun configureLogging() {
+    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "warn")
+}
+
+private fun helpText(): String = listOf(
+    "Доступные команды:",
+    "connect - подключиться к MCP-серверу и показать доступные из CLI инструменты.",
+    "tool post <postId> - получить публикацию из JSONPlaceholder по идентификатору.",
+    "help - показать это сообщение.",
+    "exit - завершить сессию клиента.",
+).joinToString(separator = System.lineSeparator())
 
 private suspend fun executeCommand(
     commandArgs: Array<String>,
