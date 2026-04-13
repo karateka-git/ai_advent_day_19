@@ -22,6 +22,14 @@ sealed interface AgentRequest {
     ) : AgentRequest
 
     /**
+     * Запрос агенту на вызов прикладной команды через capability-реестр.
+     */
+    data class CallAvailableCommand(
+        val commandId: String,
+        val arguments: Map<String, Any?> = emptyMap(),
+    ) : AgentRequest
+
+    /**
      * Запрос агенту на вызов MCP-инструмента.
      */
     data class CallTool(

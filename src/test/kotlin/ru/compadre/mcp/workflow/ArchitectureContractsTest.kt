@@ -130,6 +130,18 @@ class ArchitectureContractsTest {
     }
 
     @Test
+    fun agentAvailableCommandRequestKeepsCommandIdAndArguments() {
+        val request: AgentRequest = AgentRequest.CallAvailableCommand(
+            commandId = "tool.post",
+            arguments = mapOf("postId" to 1),
+        )
+
+        assertIs<AgentRequest.CallAvailableCommand>(request)
+        assertEquals("tool.post", request.commandId)
+        assertEquals(1, request.arguments["postId"])
+    }
+
+    @Test
     fun agentToolCallRequestKeepsEndpointAndToolPayload() {
         val request: AgentRequest = AgentRequest.CallTool(
             endpoint = "http://127.0.0.1:3000/mcp",

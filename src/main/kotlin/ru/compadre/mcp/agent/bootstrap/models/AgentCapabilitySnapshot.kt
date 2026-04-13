@@ -5,4 +5,5 @@ package ru.compadre.mcp.agent.bootstrap.models
  */
 data class AgentCapabilitySnapshot(
     val servers: List<PreparedMcpServer> = emptyList(),
+    val availableCommands: List<AvailableAgentCommand> = emptyList(),
 )

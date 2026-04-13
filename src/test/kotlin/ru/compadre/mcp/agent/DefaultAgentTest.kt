@@ -1,11 +1,11 @@
 package ru.compadre.mcp.agent
 
-import ru.compadre.mcp.agent.bootstrap.AgentCapabilityRegistry
-import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import ru.compadre.mcp.agent.bootstrap.AgentCapabilityRegistry
+import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import ru.compadre.mcp.mcp.client.McpClient
 import ru.compadre.mcp.mcp.client.model.McpConnectionSnapshot
 import ru.compadre.mcp.mcp.client.model.McpServerInfo
@@ -53,8 +53,8 @@ class DefaultAgentTest {
         assertIs<AgentResponse.PreparationSuccess>(response)
         assertEquals(1, response.snapshot.servers.size)
         assertEquals(true, response.snapshot.servers.single().prepared)
-        assertEquals("local_mcp_server", response.snapshot.servers.single().serverId)
         assertEquals(2, response.snapshot.servers.single().tools.size)
+        assertEquals(2, response.snapshot.availableCommands.size)
         assertEquals(response.snapshot, registry.snapshot())
     }
 
@@ -107,7 +107,91 @@ class DefaultAgentTest {
         assertEquals(true, response.snapshot.servers.first().prepared)
         assertEquals(false, response.snapshot.servers.last().prepared)
         assertEquals("server unavailable", response.snapshot.servers.last().errorMessage)
+        assertEquals(1, response.snapshot.availableCommands.size)
         assertEquals(response.snapshot, registry.snapshot())
+    }
+
+    @Test
+    fun availableCommandRequestRoutesToServerAndToolFromRegistry() = runBlocking {
+        val registry = AgentCapabilityRegistry()
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot = McpConnectionSnapshot(
+                    endpoint = endpoint,
+                    serverInfo = McpServerInfo(
+                        name = "local_mcp_server",
+                        version = "0.1.0",
+                        title = "Local MCP Server",
+                    ),
+                    tools = listOf(
+                        McpToolDescriptor(name = "fetch_post", title = "Fetch Post"),
+                    ),
+                )
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    assertEquals("http://127.0.0.1:3000/mcp", endpoint)
+                    assertEquals("fetch_post", request.toolName)
+                    assertEquals(7, request.arguments["postId"])
+
+                    return McpToolCallResult(
+                        toolName = request.toolName,
+                        isError = false,
+                        content = listOf("Публикация #7"),
+                    )
+                }
+            },
+            capabilityRegistry = registry,
+        )
+
+        agent.handle(
+            AgentRequest.Prepare(
+                servers = listOf(
+                    KnownMcpServer(
+                        serverId = "local_mcp_server",
+                        endpoint = "http://127.0.0.1:3000/mcp",
+                    ),
+                ),
+            ),
+        )
+
+        val response = agent.handle(
+            AgentRequest.CallAvailableCommand(
+                commandId = "tool.post",
+                arguments = mapOf("postId" to 7),
+            ),
+        )
+
+        assertIs<AgentResponse.ToolCallSuccess>(response)
+        assertEquals("http://127.0.0.1:3000/mcp", response.endpoint)
+        assertEquals("fetch_post", response.result.toolName)
+        assertEquals(listOf("Публикация #7"), response.result.content)
+    }
+
+    @Test
+    fun availableCommandRequestFailsBeforePreparation() = runBlocking {
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot {
+                    error("Сценарий connect не должен использоваться в этом тесте.")
+                }
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                }
+            },
+        )
+
+        val response = agent.handle(
+            AgentRequest.CallAvailableCommand(
+                commandId = "tool.posts",
+            ),
+        )
+
+        assertIs<AgentResponse.Failure>(response)
+        assertEquals(
+            "Команда `tool.posts` недоступна: агент ещё не подготовил MCP-возможности.",
+            response.message,
+        )
     }
 
     @Test

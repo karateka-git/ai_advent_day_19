@@ -21,4 +21,10 @@ class AgentCapabilityRegistry(
      * Возвращает текущий снимок возможностей агента.
      */
     fun snapshot(): AgentCapabilitySnapshot = currentSnapshot
+
+    /**
+     * Возвращает доступную пользователю команду по её стабильному идентификатору.
+     */
+    fun availableCommand(commandId: String) = currentSnapshot.availableCommands
+        .firstOrNull { command -> command.commandId == commandId }
 }

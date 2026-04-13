@@ -1,10 +1,12 @@
 package ru.compadre.mcp.agent
 
 import ru.compadre.mcp.agent.bootstrap.AgentCapabilityRegistry
+import ru.compadre.mcp.agent.bootstrap.buildAvailableAgentCommands
 import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
 import ru.compadre.mcp.mcp.client.McpClient
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
 
 /**
  * Стандартная реализация агентного слоя поверх проектного MCP-клиента.
@@ -16,13 +18,16 @@ class DefaultAgent(
     override suspend fun handle(request: AgentRequest): AgentResponse = when (request) {
         is AgentRequest.Prepare -> handlePrepare(request)
         is AgentRequest.Connect -> handleConnect(request)
+        is AgentRequest.CallAvailableCommand -> handleCallAvailableCommand(request)
         is AgentRequest.CallTool -> handleCallTool(request)
     }
 
     private suspend fun handlePrepare(request: AgentRequest.Prepare): AgentResponse =
         runCatching {
+            val preparedServers = request.servers.map { server -> prepareServer(server) }
             val snapshot = AgentCapabilitySnapshot(
-                servers = request.servers.map { server -> prepareServer(server) },
+                servers = preparedServers,
+                availableCommands = buildAvailableAgentCommands(preparedServers),
             )
 
             capabilityRegistry.replace(snapshot)
@@ -47,6 +52,27 @@ class DefaultAgent(
                 message = error.message ?: "Не удалось выполнить агентный запрос connect.",
             )
         }
+
+    private suspend fun handleCallAvailableCommand(request: AgentRequest.CallAvailableCommand): AgentResponse {
+        val capabilitySnapshot = capabilityRegistry.snapshot()
+        val availableCommand = capabilityRegistry.availableCommand(request.commandId)
+            ?: return AgentResponse.Failure(
+                message = unavailableCommandMessage(
+                    commandId = request.commandId,
+                    capabilitySnapshot = capabilitySnapshot,
+                ),
+            )
+
+        return handleCallTool(
+            AgentRequest.CallTool(
+                endpoint = availableCommand.endpoint,
+                toolCallRequest = McpToolCallRequest(
+                    toolName = availableCommand.toolName,
+                    arguments = request.arguments,
+                ),
+            ),
+        )
+    }
 
     private suspend fun handleCallTool(request: AgentRequest.CallTool): AgentResponse =
         runCatching {
@@ -82,4 +108,13 @@ class DefaultAgent(
                 errorMessage = error.message ?: "Не удалось подготовить MCP-сервер `${server.serverId}`.",
             )
         }
+
+    private fun unavailableCommandMessage(
+        commandId: String,
+        capabilitySnapshot: AgentCapabilitySnapshot,
+    ): String = if (capabilitySnapshot.servers.isEmpty()) {
+        "Команда `$commandId` недоступна: агент ещё не подготовил MCP-возможности."
+    } else {
+        "Команда `$commandId` недоступна: агент не нашёл для неё подходящий MCP-инструмент."
+    }
 }
