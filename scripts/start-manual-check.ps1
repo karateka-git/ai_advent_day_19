@@ -93,6 +93,18 @@ Set-Location '$escapedProjectRoot'
 "@
 }
 
+function New-Utf8CmdArgumentList {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$BatPath
+    )
+
+    return @(
+        "/k",
+        "chcp 65001>nul && cd /d `"$ProjectRoot`" && call `"$BatPath`""
+    )
+}
+
 function Start-HeadlessLauncherProcess {
     param(
         [Parameter(Mandatory = $true)][string]$ProjectRoot,
@@ -249,7 +261,7 @@ if ($Headless) {
 
 $serverCommand = New-Utf8ShellCommand -ProjectRoot $projectRoot -BatPath $serverBatPath
 $statefulServerCommand = New-Utf8ShellCommand -ProjectRoot $projectRoot -BatPath $statefulServerBatPath
-$clientCommand = New-Utf8ShellCommand -ProjectRoot $projectRoot -BatPath $clientBatPath
+$clientArgumentList = New-Utf8CmdArgumentList -ProjectRoot $projectRoot -BatPath $clientBatPath
 
 Write-Output "Opening stateless server window..."
 $serverWindow = Start-Process powershell `
@@ -267,8 +279,8 @@ Wait-Port -TargetHost $serverHost -Port $statelessServerPort
 Wait-Port -TargetHost $serverHost -Port $statefulServerPort
 
 Write-Output "Opening client window..."
-$clientWindow = Start-Process powershell `
-    -ArgumentList "-NoExit", "-Command", $clientCommand `
+$clientWindow = Start-Process cmd.exe `
+    -ArgumentList $clientArgumentList `
     -WorkingDirectory $projectRoot `
     -PassThru
 
