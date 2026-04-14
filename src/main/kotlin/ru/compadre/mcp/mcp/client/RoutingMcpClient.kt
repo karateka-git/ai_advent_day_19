@@ -31,10 +31,6 @@ class RoutingMcpClient(
     fun randomPostNotifications(): SharedFlow<RandomPostMessage> = statefulClient.randomPostNotifications()
 
     suspend fun close() {
-        try {
-            statefulClient.close()
-        } finally {
-            statelessClient.close()
-        }
+        statefulClient.close()
     }
 }
