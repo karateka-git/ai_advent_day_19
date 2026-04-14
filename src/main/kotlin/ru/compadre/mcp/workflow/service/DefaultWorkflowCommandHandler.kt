@@ -13,14 +13,12 @@ import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
 import ru.compadre.mcp.workflow.command.ToolSummariesCommand
 import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummarySavedCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.CommandResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 
-/**
- * Стандартная реализация обработчика workflow-команд.
- */
 class DefaultWorkflowCommandHandler(
     private val agent: Agent,
 ) : WorkflowCommandHandler {
@@ -31,6 +29,7 @@ class DefaultWorkflowCommandHandler(
         is ToolStartRandomPostsCommand -> handleToolStartRandomPosts(command)
         ToolSummariesCommand -> handleToolSummaries()
         is ToolSummaryPostsCommand -> handleToolSummaryPosts(command)
+        is ToolSummarySavedCommand -> handleToolSummarySaved(command)
     }
 
     private suspend fun handlePrepareAgent(): AgentPreparationResult =
@@ -126,6 +125,13 @@ class DefaultWorkflowCommandHandler(
                 errorMessage = "Агент вернул результат подготовки вместо pipeline-результата.",
             )
         }
+
+    private suspend fun handleToolSummarySaved(command: ToolSummarySavedCommand): ToolCallResult =
+        handleAvailableCommand(
+            commandText = "tool summary saved ${command.summaryId}",
+            commandId = AgentCommandId.TOOL_SUMMARY_SAVED,
+            arguments = mapOf("summaryId" to command.summaryId),
+        )
 
     private suspend fun handleToolSummaries(): ToolCallResult =
         handleAvailableCommand(

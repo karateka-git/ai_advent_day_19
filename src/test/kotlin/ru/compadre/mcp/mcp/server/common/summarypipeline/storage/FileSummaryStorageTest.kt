@@ -32,6 +32,7 @@ class FileSummaryStorageTest {
 
         assertEquals(1, allSummaries.size)
         assertEquals(savedSummary, allSummaries.single())
+        assertEquals("summary-1", savedSummary.displayId)
         assertEquals("2026-04-14T12:00:00Z", savedSummary.savedAt)
         assertTrue(Files.exists(tempFile))
     }

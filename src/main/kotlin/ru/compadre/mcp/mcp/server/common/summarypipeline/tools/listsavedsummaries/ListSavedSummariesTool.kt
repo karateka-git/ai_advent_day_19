@@ -30,7 +30,8 @@ internal fun listSavedSummariesToolResult(summaryStorage: SummaryStorage): CallT
         buildString {
             appendLine("Сохранённые summary: ${summaries.size}")
             summaries.forEachIndexed { index, summary ->
-                append("${index + 1}. ${summary.title} [${summary.summaryId}]")
+                append("${index + 1}. [${summary.displayId}] ${summary.title}")
+                append(" | ${summary.strategy} | posts: ${summary.sourcePostIds.joinToString()}")
                 if (index != summaries.lastIndex) {
                     appendLine()
                 }

@@ -39,7 +39,7 @@ class DefaultAgentTest {
                 )
 
                 override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
-                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                    error("tools/call should not be used in this test")
                 }
             },
             capabilityRegistry = registry,
@@ -87,7 +87,7 @@ class DefaultAgentTest {
                     }
 
                 override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
-                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                    error("tools/call should not be used in this test")
                 }
             },
             capabilityRegistry = registry,
@@ -178,11 +178,11 @@ class DefaultAgentTest {
         val agent = DefaultAgent(
             mcpClient = object : McpClient {
                 override suspend fun connect(endpoint: String): McpConnectionSnapshot {
-                    error("Сценарий connect не должен использоваться в этом тесте.")
+                    error("connect should not be used in this test")
                 }
 
                 override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
-                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                    error("tools/call should not be used in this test")
                 }
             },
         )
@@ -218,7 +218,7 @@ class DefaultAgentTest {
                 )
 
                 override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
-                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                    error("tools/call should not be used in this test")
                 }
             },
         )
@@ -240,7 +240,7 @@ class DefaultAgentTest {
                 }
 
                 override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
-                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                    error("tools/call should not be used in this test")
                 }
             },
         )
@@ -256,7 +256,7 @@ class DefaultAgentTest {
         val agent = DefaultAgent(
             mcpClient = object : McpClient {
                 override suspend fun connect(endpoint: String): McpConnectionSnapshot {
-                    error("Сценарий connect не должен использоваться в этом тесте.")
+                    error("connect should not be used in this test")
                 }
 
                 override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult =
@@ -289,7 +289,7 @@ class DefaultAgentTest {
         val agent = DefaultAgent(
             mcpClient = object : McpClient {
                 override suspend fun connect(endpoint: String): McpConnectionSnapshot {
-                    error("Сценарий connect не должен использоваться в этом тесте.")
+                    error("connect should not be used in this test")
                 }
 
                 override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
@@ -401,7 +401,8 @@ class DefaultAgentTest {
                             isError = false,
                             content = listOf("saved"),
                             structuredContent = buildJsonObject {
-                                put("summaryId", "summary-1")
+                                put("summaryId", "internal-uuid")
+                                put("displayId", "summary-1")
                                 put("savedAt", "2026-04-14T12:00:00Z")
                                 put("title", "Summary")
                                 put("content", "Summary content")

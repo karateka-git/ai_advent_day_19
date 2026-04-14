@@ -18,6 +18,7 @@ import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
 import ru.compadre.mcp.workflow.command.ToolSummariesCommand
 import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummarySavedCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
@@ -269,6 +270,34 @@ class DefaultWorkflowCommandHandlerTest {
     }
 
     @Test
+    fun toolSummarySavedCommandUsesAvailableCommandRouting() = runBlocking {
+        val handler = DefaultWorkflowCommandHandler(
+            agent = object : Agent {
+                override suspend fun handle(request: AgentRequest): AgentResponse {
+                    val toolRequest = request as AgentRequest.CallAvailableCommand
+                    assertEquals(AgentCommandId.TOOL_SUMMARY_SAVED, toolRequest.commandId)
+                    assertEquals("summary-2", toolRequest.arguments["summaryId"])
+
+                    return AgentResponse.ToolCallSuccess(
+                        endpoint = "http://127.0.0.1:3000/mcp",
+                        result = McpToolCallResult(
+                            toolName = "get_saved_summary",
+                            isError = false,
+                            content = listOf("Короткие публикации: title [summary-2]", "Стратегия: short"),
+                        ),
+                    )
+                }
+            },
+        )
+
+        val result = handler.handle(ToolSummarySavedCommand(summaryId = "summary-2"))
+
+        assertIs<ToolCallResult>(result)
+        assertEquals(true, result.successful)
+        assertEquals("tool summary saved summary-2", result.commandText)
+    }
+
+    @Test
     fun toolSummariesCommandUsesAvailableCommandRouting() = runBlocking {
         val handler = DefaultWorkflowCommandHandler(
             agent = object : Agent {
@@ -281,7 +310,7 @@ class DefaultWorkflowCommandHandlerTest {
                         result = McpToolCallResult(
                             toolName = "list_saved_summaries",
                             isError = false,
-                            content = listOf("Сохранённые summary: 1", "1. Summary [summary-1]"),
+                            content = listOf("Сохранённые summary: 1", "1. [summary-1] Короткие публикации: title | short | posts: 1, 2, 3"),
                         ),
                     )
                 }

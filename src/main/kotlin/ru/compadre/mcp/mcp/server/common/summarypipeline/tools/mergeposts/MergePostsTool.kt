@@ -32,18 +32,10 @@ fun mergePostsToolSchema(): ToolSchema = ToolSchema(
 
 fun mergePostsToolOutputSchema(): ToolSchema = ToolSchema(
     properties = buildJsonObject {
-        putJsonObject("title") {
-            put("type", "string")
-        }
-        putJsonObject("content") {
-            put("type", "string")
-        }
-        putJsonObject("sourcePostIds") {
-            put("type", "array")
-        }
-        putJsonObject("strategy") {
-            put("type", "string")
-        }
+        putJsonObject("title") { put("type", "string") }
+        putJsonObject("content") { put("type", "string") }
+        putJsonObject("sourcePostIds") { put("type", "array") }
+        putJsonObject("strategy") { put("type", "string") }
     },
     required = listOf("title", "content", "sourcePostIds", "strategy"),
 )
@@ -68,7 +60,7 @@ internal fun mergePostsToolResult(arguments: JsonObject?): CallToolResult {
     }
 
     val draft = SummaryDraft(
-        title = "Summary по публикациям ($strategy)",
+        title = buildSummaryTitle(strategy, posts),
         content = buildString {
             appendLine("Стратегия отбора: $strategy")
             appendLine("Количество объединённых публикаций: ${posts.size}")
@@ -93,6 +85,24 @@ internal fun mergePostsToolResult(arguments: JsonObject?): CallToolResult {
             summaryPipelineJson.encodeToString(draft),
         ).jsonObject,
     )
+}
+
+private fun buildSummaryTitle(strategy: String, posts: List<SummaryPost>): String {
+    val prefix = when (strategy) {
+        "long" -> "Длинные публикации"
+        "short" -> "Короткие публикации"
+        else -> "Summary"
+    }
+    val titles = posts.joinToString(" / ") { post ->
+        post.title.replace(Regex("\\s+"), " ").trim()
+    }
+    val normalized = "$prefix: $titles"
+
+    return if (normalized.length <= 96) {
+        normalized
+    } else {
+        normalized.take(93).trimEnd() + "..."
+    }
 }
 
 private fun JsonObject?.requiredStringArgument(name: String): String? =

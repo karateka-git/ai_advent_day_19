@@ -22,6 +22,8 @@ class StatelessMcpServerTest {
                 override fun save(draft: SummaryDraft): SavedSummary = error("not used")
 
                 override fun list(): List<SavedSummary> = emptyList()
+
+                override fun get(summaryId: String): SavedSummary? = null
             },
         )
 
@@ -35,6 +37,7 @@ class StatelessMcpServerTest {
                 "merge_posts",
                 "save_summary",
                 "list_saved_summaries",
+                "get_saved_summary",
             ),
             server.tools.keys,
         )
@@ -46,5 +49,6 @@ class StatelessMcpServerTest {
         assertTrue(server.tools["merge_posts"] != null)
         assertTrue(server.tools["save_summary"] != null)
         assertTrue(server.tools["list_saved_summaries"] != null)
+        assertTrue(server.tools["get_saved_summary"] != null)
     }
 }

@@ -1,12 +1,10 @@
 package ru.compadre.mcp.mcp.server.common.summarypipeline.tools.mergeposts
 
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
-import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
-import kotlinx.serialization.json.putJsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -39,5 +37,6 @@ class MergePostsToolTest {
         val structuredContent = assertNotNull(result.structuredContent)
         assertEquals("long", structuredContent.getValue("strategy").toString().trim('"'))
         assertEquals(3, structuredContent.getValue("sourcePostIds").jsonArray.size)
+        assertEquals(true, structuredContent.getValue("title").toString().contains("Длинные публикации"))
     }
 }

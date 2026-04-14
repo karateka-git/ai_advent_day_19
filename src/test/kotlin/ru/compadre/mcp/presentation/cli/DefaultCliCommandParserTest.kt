@@ -9,6 +9,7 @@ import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
 import ru.compadre.mcp.workflow.command.ToolSummariesCommand
 import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummarySavedCommand
 
 class DefaultCliCommandParserTest {
     @Test
@@ -115,6 +116,16 @@ class DefaultCliCommandParserTest {
         assertIs<ToolSummaryPostsCommand>(command)
         assertEquals(10, command.count)
         assertEquals("short", command.strategy)
+    }
+
+    @Test
+    fun parseAcceptsToolSummarySavedCommand() {
+        val parser = DefaultCliCommandParser()
+
+        val command = parser.parse(arrayOf("tool", "summary", "saved", "summary-2"))
+
+        assertIs<ToolSummarySavedCommand>(command)
+        assertEquals("summary-2", command.summaryId)
     }
 
     @Test

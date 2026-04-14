@@ -27,6 +27,7 @@ class AvailableAgentCommandResolverTest {
                         McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
                         McpToolDescriptor(name = "save_summary", title = "Save Summary"),
                         McpToolDescriptor(name = "list_saved_summaries", title = "List Saved Summaries"),
+                        McpToolDescriptor(name = "get_saved_summary", title = "Get Saved Summary"),
                     ),
                 ),
                 PreparedMcpServer(
@@ -40,9 +41,10 @@ class AvailableAgentCommandResolverTest {
             ),
         )
 
-        assertEquals(5, result.size)
+        assertEquals(6, result.size)
         assertEquals(AgentCommandId.TOOL_POSTS, result.first().commandId)
         assertEquals(true, result.any { it.commandId == AgentCommandId.TOOL_SUMMARY_POSTS })
+        assertEquals(true, result.any { it.commandId == AgentCommandId.TOOL_SUMMARY_SAVED })
         assertEquals("tool summaries", result.last().cliPattern)
     }
 

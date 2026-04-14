@@ -18,38 +18,24 @@ import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.summaryPipelineJs
 
 fun saveSummaryToolSchema(): ToolSchema = ToolSchema(
     properties = buildJsonObject {
-        putJsonObject("title") {
-            put("type", "string")
-        }
-        putJsonObject("content") {
-            put("type", "string")
-        }
-        putJsonObject("strategy") {
-            put("type", "string")
-        }
-        putJsonObject("sourcePostIds") {
-            put("type", "array")
-        }
+        putJsonObject("title") { put("type", "string") }
+        putJsonObject("content") { put("type", "string") }
+        putJsonObject("strategy") { put("type", "string") }
+        putJsonObject("sourcePostIds") { put("type", "array") }
     },
     required = listOf("title", "content", "strategy", "sourcePostIds"),
 )
 
 fun saveSummaryToolOutputSchema(): ToolSchema = ToolSchema(
     properties = buildJsonObject {
-        putJsonObject("summaryId") {
-            put("type", "string")
-        }
-        putJsonObject("savedAt") {
-            put("type", "string")
-        }
-        putJsonObject("strategy") {
-            put("type", "string")
-        }
-        putJsonObject("sourcePostIds") {
-            put("type", "array")
-        }
+        putJsonObject("summaryId") { put("type", "string") }
+        putJsonObject("displayId") { put("type", "string") }
+        putJsonObject("savedAt") { put("type", "string") }
+        putJsonObject("title") { put("type", "string") }
+        putJsonObject("strategy") { put("type", "string") }
+        putJsonObject("sourcePostIds") { put("type", "array") }
     },
-    required = listOf("summaryId", "savedAt", "strategy", "sourcePostIds"),
+    required = listOf("summaryId", "displayId", "savedAt", "title", "strategy", "sourcePostIds"),
 )
 
 internal fun saveSummaryToolResult(
@@ -78,7 +64,7 @@ internal fun saveSummaryToolResult(
     )
 
     return CallToolResult(
-        content = listOf(TextContent("Summary сохранён: ${savedSummary.summaryId} (${savedSummary.savedAt})")),
+        content = listOf(TextContent("Summary сохранён: ${savedSummary.displayId} (${savedSummary.savedAt})")),
         isError = false,
         structuredContent = summaryPipelineJson.parseToJsonElement(
             summaryPipelineJson.encodeToString(savedSummary),

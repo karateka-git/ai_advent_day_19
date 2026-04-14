@@ -5,8 +5,8 @@ import java.nio.file.Files
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
@@ -41,8 +41,10 @@ class SaveSummaryToolTest {
         )
 
         assertEquals(false, result.isError)
-        assertIs<TextContent>(result.content.single())
+        val content = assertIs<TextContent>(result.content.single())
+        assertEquals(true, content.text.contains("summary-1"))
         val structuredContent = assertNotNull(result.structuredContent)
+        assertEquals("summary-1", structuredContent.getValue("displayId").toString().trim('"'))
         assertEquals("short", structuredContent.getValue("strategy").toString().trim('"'))
         assertEquals(3, structuredContent.getValue("sourcePostIds").jsonArray.size)
         assertEquals(1, storage.list().size)

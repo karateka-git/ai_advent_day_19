@@ -1,7 +1,6 @@
 package ru.compadre.mcp.agent
 
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import ru.compadre.mcp.agent.bootstrap.AgentCapabilityRegistry
 import ru.compadre.mcp.agent.bootstrap.commands.AvailableAgentCommandResolver
 import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
@@ -18,9 +17,6 @@ import ru.compadre.mcp.mcp.server.common.summarypipeline.models.SummaryDraft
 import ru.compadre.mcp.mcp.server.common.summarypipeline.models.SummaryPost
 import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.summaryPipelineJson
 
-/**
- * Стандартная реализация агентного слоя поверх проектного MCP-клиента.
- */
 class DefaultAgent(
     private val mcpClient: McpClient,
     private val capabilityRegistry: AgentCapabilityRegistry = AgentCapabilityRegistry(),
@@ -105,8 +101,7 @@ class DefaultAgent(
                 )
             }
 
-            val randomPosts = decodeStructured<PostSelection>(randomPostsResult)
-                .posts
+            val randomPosts = decodeStructured<PostSelection>(randomPostsResult).posts
             val selectedPosts = selectSummaryPosts(randomPosts, request.strategy)
 
             val mergeResult = mcpClient.callTool(
@@ -163,7 +158,8 @@ class DefaultAgent(
                         "Summary pipeline выполнен успешно.",
                         "Стратегия: ${request.strategy}",
                         "Выбраны публикации: ${selectedPosts.joinToString { it.id.toString() }}",
-                        "Сохранён summary: ${savedSummary.summaryId}",
+                        "Заголовок: ${savedSummary.title}",
+                        "Сохранён summary: ${savedSummary.displayId}",
                         "Время сохранения: ${savedSummary.savedAt}",
                     ),
                     structuredContent = saveResult.structuredContent,

@@ -19,7 +19,8 @@ class ListSavedSummariesToolTest {
 
                 override fun list(): List<SavedSummary> = listOf(
                     SavedSummary(
-                        summaryId = "summary-1",
+                        summaryId = "internal-uuid",
+                        displayId = "summary-1",
                         savedAt = "2026-04-14T12:00:00Z",
                         title = "Summary title",
                         content = "Summary content",
@@ -27,11 +28,14 @@ class ListSavedSummariesToolTest {
                         strategy = "long",
                     ),
                 )
+
+                override fun get(summaryId: String): SavedSummary? = error("get should not be called")
             },
         )
 
         assertEquals(false, result.isError)
-        assertIs<TextContent>(result.content.single())
+        val content = assertIs<TextContent>(result.content.single())
+        assertEquals(true, content.text.contains("[summary-1]"))
         val structuredContent = assertNotNull(result.structuredContent)
         assertEquals(1, structuredContent.getValue("summaries").jsonArray.size)
     }

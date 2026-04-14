@@ -26,6 +26,7 @@ data class SummaryDraft(
 @Serializable
 data class SavedSummary(
     val summaryId: String,
+    val displayId: String = "",
     val savedAt: String,
     val title: String,
     val content: String,

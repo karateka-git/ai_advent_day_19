@@ -6,10 +6,8 @@ import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
 import ru.compadre.mcp.workflow.command.ToolSummariesCommand
 import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummarySavedCommand
 
-/**
- * Стандартный CLI-разборщик пользовательских команд проекта.
- */
 class DefaultCliCommandParser : CliCommandParser {
     override fun parse(args: Array<String>): Command {
         val rawCommand = args.firstOrNull()
@@ -76,7 +74,7 @@ class DefaultCliCommandParser : CliCommandParser {
             ?.trim()
             ?.lowercase()
             ?: throw IllegalArgumentException(
-                "Для команды `tool summary` требуется указать целевой сценарий. Поддерживаемый формат: `tool summary posts <count> [strategy]`.",
+                "Для команды `tool summary` требуется указать целевой сценарий. Поддерживаемые форматы: `tool summary posts <count> [strategy]`, `tool summary saved <summaryId>`.",
             )
 
         return when (target) {
@@ -103,8 +101,19 @@ class DefaultCliCommandParser : CliCommandParser {
                 )
             }
 
+            "saved" -> {
+                val summaryId = args.getOrNull(3)
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalArgumentException(
+                        "Для команды `tool summary saved` требуется аргумент `<summaryId>`.",
+                    )
+
+                ToolSummarySavedCommand(summaryId = summaryId)
+            }
+
             else -> throw IllegalArgumentException(
-                "Неизвестный сценарий для `tool summary`: `$target`. Поддерживаемый формат: `tool summary posts <count> [strategy]`.",
+                "Неизвестный сценарий для `tool summary`: `$target`. Поддерживаемые форматы: `tool summary posts <count> [strategy]`, `tool summary saved <summaryId>`.",
             )
         }
     }
@@ -112,6 +121,6 @@ class DefaultCliCommandParser : CliCommandParser {
     private companion object {
         private val supportedStrategies = setOf("long", "short")
         private const val supportedCommandsDescription =
-            "tool posts, tool post <postId>, tool start-random-posts [intervalMinutes], tool summary posts <count> [strategy], tool summaries"
+            "tool posts, tool post <postId>, tool start-random-posts [intervalMinutes], tool summary posts <count> [strategy], tool summary saved <summaryId>, tool summaries"
     }
 }

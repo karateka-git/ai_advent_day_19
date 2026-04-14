@@ -17,6 +17,9 @@ import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.DefaultJsonPlacehol
 import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.JsonPlaceholderApiClient
 import ru.compadre.mcp.mcp.server.common.summarypipeline.storage.FileSummaryStorage
 import ru.compadre.mcp.mcp.server.common.summarypipeline.storage.SummaryStorage
+import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.getsavedsummary.getSavedSummaryToolOutputSchema
+import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.getsavedsummary.getSavedSummaryToolResult
+import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.getsavedsummary.getSavedSummaryToolSchema
 import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.listsavedsummaries.listSavedSummariesToolOutputSchema
 import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.listsavedsummaries.listSavedSummariesToolResult
 import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.listsavedsummaries.listSavedSummariesToolSchema
@@ -34,9 +37,6 @@ import ru.compadre.mcp.mcp.server.common.toolcall.tools.fetchpost.fetchPostToolS
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.listposts.listPostsToolResult
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.listposts.listPostsToolSchema
 
-/**
- * Собирает MCP server для локального sandbox-проекта.
- */
 internal fun createStatelessMcpServer(
     jsonPlaceholderApiClient: JsonPlaceholderApiClient = DefaultJsonPlaceholderApiClient(),
     summaryStorage: SummaryStorage = FileSummaryStorage(),
@@ -109,7 +109,7 @@ internal fun createStatelessMcpServer(
     addTool(
         name = "pick_random_posts",
         title = "Pick Random Posts",
-        description = "Получает заданное количество случайных публикаций из JSONPlaceholder.",
+        description = "Получает заданное количество случайных публикаций из локального каталога.",
         inputSchema = pickRandomPostsToolSchema(),
         outputSchema = pickRandomPostsToolOutputSchema(),
     ) { request ->
@@ -154,11 +154,21 @@ internal fun createStatelessMcpServer(
             summaryStorage = summaryStorage,
         )
     }
+
+    addTool(
+        name = "get_saved_summary",
+        title = "Get Saved Summary",
+        description = "Возвращает одну summary из локального хранилища по идентификатору.",
+        inputSchema = getSavedSummaryToolSchema(),
+        outputSchema = getSavedSummaryToolOutputSchema(),
+    ) { request ->
+        getSavedSummaryToolResult(
+            arguments = request.arguments,
+            summaryStorage = summaryStorage,
+        )
+    }
 }
 
-/**
- * Возвращает input schema для инструмента `echo`.
- */
 private fun echoToolSchema(): ToolSchema = ToolSchema(
     properties = buildJsonObject {
         putJsonObject("message") {
@@ -169,9 +179,6 @@ private fun echoToolSchema(): ToolSchema = ToolSchema(
     required = listOf("message"),
 )
 
-/**
- * Извлекает обязательный строковый аргумент инструмента из JSON-аргументов вызова.
- */
 private fun CallToolRequest.requiredStringArgument(name: String): String? =
     arguments
         ?.get(name)
