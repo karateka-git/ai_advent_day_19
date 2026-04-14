@@ -74,6 +74,79 @@
 - отдельного `stop_random_posts` пока нет;
 - остановка push привязана к завершению клиентской сессии.
 
+## Pipeline
+
+Ниже путь пользовательской команды через общий CLI и два MCP-контура.
+
+### 1. Подготовка агента
+
+- [App.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/App.kt)
+  Запускает `PrepareAgentCommand` перед входом в интерактивный режим.
+- [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt)
+  Делегирует подготовку агенту.
+- [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
+  Обходит известные MCP-серверы и собирает capability snapshot.
+- [RoutingMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/RoutingMcpClient.kt)
+  Подключает `stateless` и `stateful` контуры через разные client runtime.
+
+Результат:
+
+- CLI знает, какие команды реально доступны;
+- если один из серверов недоступен, команды этого контура скрываются и появляется понятное предупреждение.
+
+### 2. Обычный stateless сценарий
+
+Пример:
+
+```text
+tool post 2
+```
+
+Путь:
+
+1. [DefaultCliCommandParser.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/presentation/cli/DefaultCliCommandParser.kt)
+   Разбирает ввод в `ToolPostCommand`.
+2. [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt)
+   Превращает его в `AgentRequest.CallAvailableCommand`.
+3. [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
+   Находит command definition и понимает, что команда идёт в `stateless`.
+4. [RoutingMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/RoutingMcpClient.kt)
+   Отправляет вызов в [StatelessMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/stateless/StatelessMcpClient.kt).
+5. `StatelessMcpClient` вызывает tool на [StatelessMcpServerApp.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/server/stateless/StatelessMcpServerApp.kt).
+6. Общий server-side tool из `mcp/server/common/toolcall/tools/...` возвращает обычный результат.
+
+### 3. Stateful push сценарий
+
+Пример:
+
+```text
+tool start-random-posts 1
+```
+
+Путь:
+
+1. [DefaultCliCommandParser.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/presentation/cli/DefaultCliCommandParser.kt)
+   Разбирает ввод в `ToolStartRandomPostsCommand`.
+2. [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt)
+   Делегирует вызов агенту.
+3. [ToolStartRandomPostsAgentCommandDefinition.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/bootstrap/commands/ToolStartRandomPostsAgentCommandDefinition.kt)
+   Закрепляет маршрут в `stateful` контур.
+4. [RoutingMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/RoutingMcpClient.kt)
+   Передаёт вызов в [StatefulMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/stateful/StatefulMcpClient.kt).
+5. `StatefulMcpClient` держит долгоживущую SSE-сессию и вызывает tool на [StatefulMcpServerApp.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/StatefulMcpServerApp.kt).
+6. [StartRandomPostsTool.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/toolcall/tools/startrandomposts/StartRandomPostsTool.kt)
+   Регистрирует или обновляет подписку текущей сессии.
+7. [RandomPostTickerService.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/background/RandomPostTickerService.kt)
+   Периодически получает случайный пост и шлёт `notifications/random_post`.
+8. [App.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/App.kt)
+   Слушает push-уведомления и печатает `[push] ...` в тот же CLI.
+
+### 4. Ключевое отличие двух путей
+
+- `stateless` путь заканчивается сразу после ответа на `tools/call`.
+- `stateful` путь после успешного `tools/call` продолжает жить в рамках клиентской сессии.
+- В `stateful` сценарии важен не только результат команды, но и последующие server-to-client notifications.
+
 ## Сборка
 
 Базовая сборка:
