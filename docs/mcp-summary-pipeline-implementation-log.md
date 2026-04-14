@@ -311,6 +311,7 @@
 4. Agent routing для `tool summary posts`, `tool summaries` и `tool summary saved` переведён на `LOCAL_STATEFUL_MCP_SERVER`.
 5. `StatefulMcpClient` начал сохранять `structuredContent`, чтобы pipeline мог продолжаться после `pick_random_posts`.
 6. E2E-скрипт обновлён под новую схему и более устойчивые проверки вывода.
+7. `start-manual-check.ps1` обновлён: клиентское окно теперь открывается через `cmd` с `chcp 65001`, чтобы ручная проверка на Windows не давала кракозябры.
 
 Проверка:
 

@@ -47,6 +47,7 @@
   - запуск уже собранного проекта: `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild`
   - сквозная проверка: `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`
 - Для ручного запуска предпочитать direct launcher-артефакты из `build\install\...`, а не `gradlew run...`: так в консоли не смешиваются вывод приложения и Gradle progress UI.
+- `start-manual-check.ps1` по умолчанию открывает клиент в `cmd` с `UTF-8` code page, потому что так стабильнее отображается русскоязычный CLI-вывод.
 - Трактовка пользовательской фразы `собери проект`: по умолчанию это запуск `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1`, а не только `.\gradlew.bat build`.
 - Трактовка пользовательской фразы `запусти проект`: по умолчанию это запуск `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild`.
 - Локальные endpoints:

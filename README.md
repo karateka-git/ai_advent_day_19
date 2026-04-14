@@ -139,6 +139,8 @@ Pipeline выполняется автоматически:
 powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1
 ```
 
+Сценарий открывает серверные окна в PowerShell, а клиент по умолчанию в `cmd` с `chcp 65001`, чтобы русскоязычный CLI-вывод не превращался в кракозябры.
+
 Headless e2e-проверка:
 
 ```powershell
