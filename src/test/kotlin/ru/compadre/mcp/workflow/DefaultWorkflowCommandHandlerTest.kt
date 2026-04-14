@@ -16,6 +16,7 @@ import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
@@ -235,5 +236,34 @@ class DefaultWorkflowCommandHandlerTest {
         assertIs<ToolCallResult>(result)
         assertEquals(true, result.successful)
         assertEquals("tool start-random-posts", result.commandText)
+    }
+
+    @Test
+    fun toolSummaryPostsCommandRunsPipelineThroughAgent() = runBlocking {
+        val handler = DefaultWorkflowCommandHandler(
+            agent = object : Agent {
+                override suspend fun handle(request: AgentRequest): AgentResponse {
+                    val pipelineRequest = request as AgentRequest.RunSummaryPipeline
+                    assertEquals(10, pipelineRequest.count)
+                    assertEquals("short", pipelineRequest.strategy)
+
+                    return AgentResponse.ToolCallSuccess(
+                        endpoint = "http://127.0.0.1:3000/mcp",
+                        result = McpToolCallResult(
+                            toolName = "summary_pipeline",
+                            isError = false,
+                            content = listOf("Summary pipeline выполнен успешно.", "Сохранён summary: summary-1"),
+                        ),
+                    )
+                }
+            },
+        )
+
+        val result = handler.handle(ToolSummaryPostsCommand(count = 10, strategy = "short"))
+
+        assertIs<ToolCallResult>(result)
+        assertEquals(true, result.successful)
+        assertEquals("tool summary posts 10 short", result.commandText)
+        assertEquals(true, result.content.any { it.contains("summary-1") })
     }
 }

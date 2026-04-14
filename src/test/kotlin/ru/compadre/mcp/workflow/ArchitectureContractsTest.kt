@@ -19,6 +19,7 @@ import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.CommandResult
@@ -70,6 +71,15 @@ class ArchitectureContractsTest {
 
         assertIs<ToolStartRandomPostsCommand>(command)
         assertEquals(5, command.intervalMinutes)
+    }
+
+    @Test
+    fun toolSummaryPostsCommandImplementsBaseCommandContract() {
+        val command: Command = ToolSummaryPostsCommand(count = 10, strategy = "long")
+
+        assertIs<ToolSummaryPostsCommand>(command)
+        assertEquals(10, command.count)
+        assertEquals("long", command.strategy)
     }
 
     @Test
@@ -163,6 +173,18 @@ class ArchitectureContractsTest {
         assertEquals("http://127.0.0.1:3000/mcp", request.endpoint)
         assertEquals("fetch_post", request.toolCallRequest.toolName)
         assertEquals(1, request.toolCallRequest.arguments["postId"])
+    }
+
+    @Test
+    fun agentRunSummaryPipelineRequestKeepsCountAndStrategy() {
+        val request: AgentRequest = AgentRequest.RunSummaryPipeline(
+            count = 10,
+            strategy = "short",
+        )
+
+        assertIs<AgentRequest.RunSummaryPipeline>(request)
+        assertEquals(10, request.count)
+        assertEquals("short", request.strategy)
     }
 
     @Test

@@ -1,6 +1,10 @@
 package ru.compadre.mcp.agent
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -306,5 +310,138 @@ class DefaultAgentTest {
 
         assertIs<AgentResponse.Failure>(response)
         assertEquals("tool failure", response.message)
+    }
+
+    @Test
+    fun runSummaryPipelineSelectsThreePostsAndSavesSummary() = runBlocking {
+        val registry = AgentCapabilityRegistry()
+        val endpoint = "http://127.0.0.1:3000/mcp"
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot = McpConnectionSnapshot(
+                    endpoint = endpoint,
+                    serverInfo = McpServerInfo(
+                        name = "local_mcp_server",
+                        version = "0.1.0",
+                        title = "Local MCP Server",
+                    ),
+                    tools = listOf(
+                        McpToolDescriptor(name = "pick_random_posts", title = "Pick Random Posts"),
+                        McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
+                        McpToolDescriptor(name = "save_summary", title = "Save Summary"),
+                    ),
+                )
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    return when (request.toolName) {
+                        "pick_random_posts" -> McpToolCallResult(
+                            toolName = request.toolName,
+                            isError = false,
+                            content = listOf("selected"),
+                            structuredContent = buildJsonObject {
+                                putJsonArray("posts") {
+                                    add(
+                                        buildJsonObject {
+                                            put("userId", 1)
+                                            put("id", 1)
+                                            put("title", "One")
+                                            put("body", "1234")
+                                        },
+                                    )
+                                    add(
+                                        buildJsonObject {
+                                            put("userId", 1)
+                                            put("id", 2)
+                                            put("title", "Two")
+                                            put("body", "12")
+                                        },
+                                    )
+                                    add(
+                                        buildJsonObject {
+                                            put("userId", 1)
+                                            put("id", 3)
+                                            put("title", "Three")
+                                            put("body", "123456")
+                                        },
+                                    )
+                                    add(
+                                        buildJsonObject {
+                                            put("userId", 1)
+                                            put("id", 4)
+                                            put("title", "Four")
+                                            put("body", "123")
+                                        },
+                                    )
+                                }
+                            },
+                        )
+
+                        "merge_posts" -> {
+                            val posts = request.arguments["posts"] as List<*>
+                            assertEquals(3, posts.size)
+                            McpToolCallResult(
+                                toolName = request.toolName,
+                                isError = false,
+                                content = listOf("merged"),
+                                structuredContent = buildJsonObject {
+                                    put("title", "Summary")
+                                    put("content", "Summary content")
+                                    put("strategy", "long")
+                                    putJsonArray("sourcePostIds") {
+                                        add(JsonPrimitive(3))
+                                        add(JsonPrimitive(1))
+                                        add(JsonPrimitive(4))
+                                    }
+                                },
+                            )
+                        }
+
+                        "save_summary" -> McpToolCallResult(
+                            toolName = request.toolName,
+                            isError = false,
+                            content = listOf("saved"),
+                            structuredContent = buildJsonObject {
+                                put("summaryId", "summary-1")
+                                put("savedAt", "2026-04-14T12:00:00Z")
+                                put("title", "Summary")
+                                put("content", "Summary content")
+                                put("strategy", "long")
+                                putJsonArray("sourcePostIds") {
+                                    add(JsonPrimitive(3))
+                                    add(JsonPrimitive(1))
+                                    add(JsonPrimitive(4))
+                                }
+                            },
+                        )
+
+                        else -> error("unexpected tool ${request.toolName}")
+                    }
+                }
+            },
+            capabilityRegistry = registry,
+        )
+
+        agent.handle(
+            AgentRequest.Prepare(
+                servers = listOf(
+                    KnownMcpServer(
+                        serverId = McpServerId.LOCAL_MCP_SERVER,
+                        endpoint = endpoint,
+                    ),
+                ),
+            ),
+        )
+
+        val response = agent.handle(
+            AgentRequest.RunSummaryPipeline(
+                count = 4,
+                strategy = "long",
+            ),
+        )
+
+        assertIs<AgentResponse.ToolCallSuccess>(response)
+        assertEquals("summary_pipeline", response.result.toolName)
+        assertEquals(false, response.result.isError)
+        assertEquals(true, response.result.content.any { it.contains("summary-1") })
     }
 }

@@ -31,6 +31,14 @@ sealed interface AgentRequest {
     ) : AgentRequest
 
     /**
+     * Запрос агенту на запуск автоматического summary-pipeline по публикациям.
+     */
+    data class RunSummaryPipeline(
+        val count: Int,
+        val strategy: String,
+    ) : AgentRequest
+
+    /**
      * Запрос агенту на вызов MCP-инструмента.
      */
     data class CallTool(

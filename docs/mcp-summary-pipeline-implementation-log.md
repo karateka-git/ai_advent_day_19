@@ -103,3 +103,53 @@
 Следующий шаг:
 
 - перейти к `Этапу 3` и реализовать orchestration pipeline в agent/workflow-слое.
+
+## Этап 3. Agent-Level Pipeline
+
+Статус: завершён
+
+Цель этапа:
+
+- реализовать автоматический pipeline в `agent/workflow`;
+- перенести выбор 3 публикаций во внутреннюю логику агента;
+- подготовить проектный контракт для передачи structured data между шагами.
+
+Выполненные действия:
+
+1. `McpToolCallResult` расширен полем `structuredContent`.
+2. `StatelessMcpClient` начал сохранять `structuredContent` из SDK-результата.
+3. В `AgentRequest` добавлен отдельный сценарий `RunSummaryPipeline`.
+4. В `DefaultAgent` реализован orchestration pipeline:
+   - вызов `pick_random_posts`;
+   - выбор 3 публикаций по стратегии `long|short`;
+   - вызов `merge_posts`;
+   - вызов `save_summary`;
+   - возврат итогового результата pipeline.
+5. В workflow добавлена команда `ToolSummaryPostsCommand`.
+6. `DefaultWorkflowCommandHandler` научился запускать summary-pipeline через агент.
+7. Добавлены unit-тесты на:
+   - сохранение нового client-side контракта;
+   - orchestration pipeline в агенте;
+   - workflow-сценарий запуска pipeline;
+   - архитектурные контракты новой команды и agent-request.
+8. Выполнен прогон `.\gradlew.bat test`.
+
+Принятые решения:
+
+- structured payload передаётся через `structuredContent`, а не через разбор строкового вывода;
+- orchestration выполняется в агенте, а не в `workflow` и не в MCP server;
+- итог pipeline возвращается как нормализованный `ToolCallSuccess`, чтобы не раздувать дерево response-моделей без необходимости.
+
+Проверка:
+
+- агент действительно вызывает несколько MCP-инструментов подряд;
+- стратегия выбора 3 публикаций применяется внутри агента;
+- `.\gradlew.bat test` завершается успешно.
+
+Коммиты этапа:
+
+- текущий коммит этапа — agent/workflow orchestration для summary pipeline.
+
+Следующий шаг:
+
+- перейти к `Этапу 4` и сделать pipeline доступным из CLI вместе с командой чтения хранилища.

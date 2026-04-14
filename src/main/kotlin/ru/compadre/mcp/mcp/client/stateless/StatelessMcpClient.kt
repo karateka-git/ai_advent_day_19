@@ -105,5 +105,6 @@ class StatelessMcpClient : McpClient {
                 else -> content.toString()
             }
         },
+        structuredContent = result.structuredContent,
     )
 }

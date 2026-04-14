@@ -2,8 +2,11 @@ package ru.compadre.mcp.mcp.client.stateless
 
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallRequest
 import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallResult
 
@@ -25,11 +28,15 @@ class StatelessMcpClientTest {
             toolName = "fetch_post",
             isError = false,
             content = listOf("Публикация #1"),
+            structuredContent = buildJsonObject {
+                put("postId", 1)
+            },
         )
 
         assertEquals("fetch_post", result.toolName)
         assertEquals(false, result.isError)
         assertEquals(listOf("Публикация #1"), result.content)
+        assertEquals("1", result.structuredContent?.get("postId")?.toString())
     }
 
     @Test
@@ -44,6 +51,9 @@ class StatelessMcpClientTest {
                     TextContent("Автор: 1"),
                 ),
                 isError = false,
+                structuredContent = buildJsonObject {
+                    put("postId", 1)
+                },
             ),
         )
 
@@ -52,8 +62,12 @@ class StatelessMcpClientTest {
                 toolName = "fetch_post",
                 isError = false,
                 content = listOf("Публикация #1", "Автор: 1"),
+                structuredContent = buildJsonObject {
+                    put("postId", 1)
+                },
             ),
             result,
         )
+        assertNotNull(result.structuredContent)
     }
 }

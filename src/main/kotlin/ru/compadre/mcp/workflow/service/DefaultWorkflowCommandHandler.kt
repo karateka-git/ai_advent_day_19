@@ -11,6 +11,7 @@ import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.CommandResult
@@ -27,11 +28,9 @@ class DefaultWorkflowCommandHandler(
         is ToolPostCommand -> handleToolPost(command)
         ToolPostsCommand -> handleToolPosts()
         is ToolStartRandomPostsCommand -> handleToolStartRandomPosts(command)
+        is ToolSummaryPostsCommand -> handleToolSummaryPosts(command)
     }
 
-    /**
-     * Запрашивает у агента актуальный snapshot возможностей и переводит его в presentation-friendly результат.
-     */
     private suspend fun handlePrepareAgent(): AgentPreparationResult =
         when (val response = agent.handle(AgentRequest.Prepare(McpProjectConfig.knownMcpServers()))) {
             is AgentResponse.PreparationSuccess -> AgentPreparationResult(
@@ -63,92 +62,19 @@ class DefaultWorkflowCommandHandler(
             )
         }
 
-    /**
-     * Делегирует вызов пользовательской команды публикации агенту по стабильному commandId.
-     */
-    private suspend fun handleToolPost(command: ToolPostCommand): ToolCallResult {
-        val commandText = "tool post ${command.postId}"
+    private suspend fun handleToolPost(command: ToolPostCommand): ToolCallResult =
+        handleAvailableCommand(
+            commandText = "tool post ${command.postId}",
+            commandId = AgentCommandId.TOOL_POST,
+            arguments = mapOf("postId" to command.postId),
+        )
 
-        return when (
-            val response = agent.handle(
-                AgentRequest.CallAvailableCommand(
-                    commandId = AgentCommandId.TOOL_POST,
-                    arguments = mapOf("postId" to command.postId),
-                ),
-            )
-        ) {
-            is AgentResponse.ToolCallSuccess -> ToolCallResult(
-                commandText = commandText,
-                successful = !response.result.isError,
-                content = response.result.content,
-                errorMessage = response.result.content.takeIf { response.result.isError }
-                    ?.joinToString(separator = System.lineSeparator()),
-            )
+    private suspend fun handleToolPosts(): ToolCallResult =
+        handleAvailableCommand(
+            commandText = "tool posts",
+            commandId = AgentCommandId.TOOL_POSTS,
+        )
 
-            is AgentResponse.Failure -> ToolCallResult(
-                commandText = commandText,
-                successful = false,
-                errorMessage = response.message,
-            )
-
-            is AgentResponse.ConnectSuccess -> ToolCallResult(
-                commandText = commandText,
-                successful = false,
-                errorMessage = "Агент вернул результат подключения для сценария вызова пользовательской команды.",
-            )
-
-            is AgentResponse.PreparationSuccess -> ToolCallResult(
-                commandText = commandText,
-                successful = false,
-                errorMessage = "Агент вернул результат подготовки вместо сценария вызова пользовательской команды.",
-            )
-        }
-    }
-
-    /**
-     * Делегирует вызов пользовательской команды списка публикаций агенту по стабильному commandId.
-     */
-    private suspend fun handleToolPosts(): ToolCallResult {
-        val commandText = "tool posts"
-
-        return when (
-            val response = agent.handle(
-                AgentRequest.CallAvailableCommand(
-                    commandId = AgentCommandId.TOOL_POSTS,
-                ),
-            )
-        ) {
-            is AgentResponse.ToolCallSuccess -> ToolCallResult(
-                commandText = commandText,
-                successful = !response.result.isError,
-                content = response.result.content,
-                errorMessage = response.result.content.takeIf { response.result.isError }
-                    ?.joinToString(separator = System.lineSeparator()),
-            )
-
-            is AgentResponse.Failure -> ToolCallResult(
-                commandText = commandText,
-                successful = false,
-                errorMessage = response.message,
-            )
-
-            is AgentResponse.ConnectSuccess -> ToolCallResult(
-                commandText = commandText,
-                successful = false,
-                errorMessage = "Агент вернул результат подключения для сценария вызова пользовательской команды.",
-            )
-
-            is AgentResponse.PreparationSuccess -> ToolCallResult(
-                commandText = commandText,
-                successful = false,
-                errorMessage = "Агент вернул результат подготовки вместо сценария вызова пользовательской команды.",
-            )
-        }
-    }
-
-    /**
-     * Делегирует запуск stateful random-post push агенту по стабильному commandId.
-     */
     private suspend fun handleToolStartRandomPosts(command: ToolStartRandomPostsCommand): ToolCallResult {
         val commandText = buildString {
             append("tool start-random-posts")
@@ -156,16 +82,24 @@ class DefaultWorkflowCommandHandler(
         }
         val arguments = command.intervalMinutes?.let { mapOf("intervalMinutes" to it) } ?: emptyMap()
 
-        return when (
+        return handleAvailableCommand(
+            commandText = commandText,
+            commandId = AgentCommandId.TOOL_START_RANDOM_POSTS,
+            arguments = arguments,
+        )
+    }
+
+    private suspend fun handleToolSummaryPosts(command: ToolSummaryPostsCommand): ToolCallResult =
+        when (
             val response = agent.handle(
-                AgentRequest.CallAvailableCommand(
-                    commandId = AgentCommandId.TOOL_START_RANDOM_POSTS,
-                    arguments = arguments,
+                AgentRequest.RunSummaryPipeline(
+                    count = command.count,
+                    strategy = command.strategy,
                 ),
             )
         ) {
             is AgentResponse.ToolCallSuccess -> ToolCallResult(
-                commandText = commandText,
+                commandText = "tool summary posts ${command.count} ${command.strategy}",
                 successful = !response.result.isError,
                 content = response.result.content,
                 errorMessage = response.result.content.takeIf { response.result.isError }
@@ -173,23 +107,61 @@ class DefaultWorkflowCommandHandler(
             )
 
             is AgentResponse.Failure -> ToolCallResult(
-                commandText = commandText,
+                commandText = "tool summary posts ${command.count} ${command.strategy}",
                 successful = false,
                 errorMessage = response.message,
             )
 
             is AgentResponse.ConnectSuccess -> ToolCallResult(
-                commandText = commandText,
+                commandText = "tool summary posts ${command.count} ${command.strategy}",
                 successful = false,
-                errorMessage = "Агент вернул результат подключения для сценария вызова пользовательской команды.",
+                errorMessage = "Агент вернул результат подключения вместо pipeline-результата.",
             )
 
             is AgentResponse.PreparationSuccess -> ToolCallResult(
-                commandText = commandText,
+                commandText = "tool summary posts ${command.count} ${command.strategy}",
                 successful = false,
-                errorMessage = "Агент вернул результат подготовки вместо сценария вызова пользовательской команды.",
+                errorMessage = "Агент вернул результат подготовки вместо pipeline-результата.",
             )
         }
+
+    private suspend fun handleAvailableCommand(
+        commandText: String,
+        commandId: AgentCommandId,
+        arguments: Map<String, Any?> = emptyMap(),
+    ): ToolCallResult = when (
+        val response = agent.handle(
+            AgentRequest.CallAvailableCommand(
+                commandId = commandId,
+                arguments = arguments,
+            ),
+        )
+    ) {
+        is AgentResponse.ToolCallSuccess -> ToolCallResult(
+            commandText = commandText,
+            successful = !response.result.isError,
+            content = response.result.content,
+            errorMessage = response.result.content.takeIf { response.result.isError }
+                ?.joinToString(separator = System.lineSeparator()),
+        )
+
+        is AgentResponse.Failure -> ToolCallResult(
+            commandText = commandText,
+            successful = false,
+            errorMessage = response.message,
+        )
+
+        is AgentResponse.ConnectSuccess -> ToolCallResult(
+            commandText = commandText,
+            successful = false,
+            errorMessage = "Агент вернул результат подключения для сценария вызова пользовательской команды.",
+        )
+
+        is AgentResponse.PreparationSuccess -> ToolCallResult(
+            commandText = commandText,
+            successful = false,
+            errorMessage = "Агент вернул результат подготовки вместо сценария вызова пользовательской команды.",
+        )
     }
 
     private fun preparationWarningFor(server: PreparedMcpServer): String {
